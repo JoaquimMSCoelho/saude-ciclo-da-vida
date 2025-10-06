@@ -41,3 +41,24 @@ CREATE TABLE pacientes (
   email TEXT UNIQUE,
   criado_em TIMESTAMP DEFAULT now()
 );
+
+---
+
+## 🔐 Variáveis de Ambiente Aplicadas
+
+| Nome                | Valor                         | Ambiente       | Status   |
+|---------------------|-------------------------------|----------------|----------|
+| VITE_SUPABASE_URL   | https://xyz.supabase.co       | All Environments | ✅ Ativa |
+| VITE_SUPABASE_KEY   | chave_publica                 | All Environments | ✅ Ativa |
+| VITE_API_URL        | https://api.saude.com         | All Environments | ✅ Ativa |
+
+Variáveis aplicadas com sucesso no painel da Vercel.  
+Disponíveis para uso no frontend via `import.meta.env`.
+
+---
+
+## 📍 Checkpoint Final da FASE 3
+
+Backend Supabase funcional e integrado ao frontend.  
+Autenticação ativada, API REST disponível e variáveis aplicadas.  
+Pronto para iniciar a **FASE 4 — Modelagem dos Módulos**.
