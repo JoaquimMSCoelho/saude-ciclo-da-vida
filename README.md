@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Saúde Ciclo da Vida
 
 Sistema clínico modular com rastreabilidade total, desenvolvido por JoaquimMSCoelho.
@@ -7,3 +8,6 @@ Sistema clínico modular com rastreabilidade total, desenvolvido por JoaquimMSCo
 - Deploy: Vercel
 - GitHub: https://github.com/JoaquimMSCoelho
 - Protocolo: MARCO ZERO v3.0
+=======
+# saude-ciclo-da-vida
+>>>>>>> 13408e61bbb72eb022355eca6c1f3205f735a939
