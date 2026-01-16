@@ -1,0 +1,71 @@
+// ARQUIVO: backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- MÓDULO 1: USUÁRIOS & AUTENTICAÇÃO ---
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Senha (Hash)
+  name      String
+  phone     String?  // Importante para SMS/WhatsApp
+  cpf       String?  @unique
+  role      String   @default("USER") // USER, ADMIN, DOCTOR
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  medications Medication[]
+  alerts      PanicAlert[]
+  appointments Appointment[]
+}
+
+// --- MÓDULO 2: MEDICAMENTOS ---
+model Medication {
+  id          String   @id @default(uuid())
+  name        String
+  dosage      String   // Ex: 500mg
+  frequency   Int      // Intervalo em horas (ex: 8 em 8 horas)
+  stock       Int      // Quantidade atual
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+// --- MÓDULO 3: BOTÃO DE PÂNICO ---
+model PanicAlert {
+  id          String   @id @default(uuid())
+  latitude    Float
+  longitude   Float
+  message     String?
+  resolved    Boolean  @default(false)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
+
+// --- MÓDULO 4: CONSULTAS ---
+model Appointment {
+  id          String   @id @default(uuid())
+  doctorName  String
+  specialty   String?
+  date        DateTime
+  location    String?
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+}
