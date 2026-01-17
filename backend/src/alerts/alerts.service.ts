@@ -1,31 +1,53 @@
-// ARQUIVO: backend/src/alerts/alerts.service.ts
+/**
+ * -------------------------------------------------------------------------
+ * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+ * ARQUITETURA: BACKEND (Service Layer)
+ * GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
+ * -------------------------------------------------------------------------
+ * MÓDULO: ALERTS SERVICE
+ * DESCRIÇÃO: Conecta ao Banco para buscar alertas.
+ * IMPORTANTE: Traz os dados do Usuário (include: user) para a Torre saber quem é.
+ * -------------------------------------------------------------------------
+ */
+
 import { Injectable } from '@nestjs/common';
-import { CreateAlertDto } from './dto/create-alert.dto';
-import { PrismaService } from '../prisma.service';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class AlertsService {
-  constructor(private prisma: PrismaService) {}
+  private prisma = new PrismaClient();
 
-  // REGISTRAR O ALERTA
-  async create(data: CreateAlertDto) {
-    console.log(`🚨 ALERTA RECEBIDO! User: ${data.userId} | GPS: ${data.latitude}, ${data.longitude}`);
-    
-    return this.prisma.panicAlert.create({
-      data: {
-        latitude: data.latitude,
-        longitude: data.longitude,
-        userId: data.userId,
-        resolved: false, // Começa como "Não resolvido"
+  // 1. CRIAR ALERTA (Chamado pelo App Mobile)
+  async create(data: any) {
+    return this.prisma.panicAlert.create({ data });
+  }
+
+  // 2. LISTAR TODOS (Chamado pela Torre)
+  // Ordena pelos mais recentes primeiro
+  async findAll() {
+    return this.prisma.panicAlert.findMany({
+      orderBy: { createdAt: 'desc' }, 
+      include: {
+        user: true, // <--- TRAZ O NOME E FOTO DO JOÃO
       },
     });
   }
 
-  // LISTAR TODOS (Para o Painel Admin futuro)
-  async findAll() {
-    return this.prisma.panicAlert.findMany({
-      include: { user: true }, // Traz os dados do usuário junto
-      orderBy: { createdAt: 'desc' } // Os mais recentes primeiro
+  // 3. BUSCAR UM ESPECÍFICO
+  async findOne(id: string) {
+    return this.prisma.panicAlert.findUnique({
+      where: { id },
+      include: { user: true },
     });
+  }
+
+  // 4. ATUALIZAR (Resolver)
+  async update(id: string, data: any) {
+    return this.prisma.panicAlert.update({ where: { id }, data });
+  }
+
+  // 5. REMOVER
+  async remove(id: string) {
+    return this.prisma.panicAlert.delete({ where: { id } });
   }
 }

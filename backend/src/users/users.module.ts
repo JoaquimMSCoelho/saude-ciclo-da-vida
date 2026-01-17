@@ -1,12 +1,21 @@
-// ARQUIVO: src/users/users.module.ts
+/**
+ * -------------------------------------------------------------------------
+ * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+ * ARQUITETURA: BACKEND (Module Layer)
+ * -------------------------------------------------------------------------
+ * MÓDULO: USERS MODULE
+ * DESCRIÇÃO: Agrupa Controller e Service.
+ * CRÍTICO: Exporta o UsersService para que o AuthModule possa usar.
+ * -------------------------------------------------------------------------
+ */
+
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { PrismaService } from '../prisma.service';
 
 @Module({
   controllers: [UsersController],
-  providers: [UsersService, PrismaService],
-  exports: [UsersService], // Exportando o serviço para uso externo
+  providers: [UsersService],
+  exports: [UsersService], // <--- A MÁGICA: Permite que o AuthModule use este serviço
 })
 export class UsersModule {}

@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-SCRIPT DE VERIFICAÇÃO DE AMBIENTE (SVA)
+-------------------------------------------------------------------------
 PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
-ARQUITETURA: MARCO ZERO v3.0
+ARQUITETURA: FULL STACK (NestJS + React Native + Next.js)
 GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
-
-Este script valida se a máquina de desenvolvimento possui o arsenal tecnológico
-mínimo para iniciar os trabalhos sem riscos de regressão ou incompatibilidade.
+-------------------------------------------------------------------------
+MÓDULO: SCRIPT DE VERIFICAÇÃO DE AMBIENTE (SVA)
+DESCRIÇÃO: Valida arsenal tecnológico (Node, Python, Git) e estrutura
+de pastas (Backend, Mobile, Web-Admin) antes do início dos trabalhos.
+-------------------------------------------------------------------------
 """
 
 import sys
 import os
 import subprocess
-import shutil
 
-# Definição de Cores ANSI para Feedback Visual
+# Definição de Cores ANSI para Feedback Visual Profissional
 class Colors:
     HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
@@ -25,7 +25,7 @@ class Colors:
     BOLD = '\033[1m'
 
 def print_status(component, status, message=""):
-    """Imprime o status formatado no console."""
+    """Imprime o status formatado e alinhado no console."""
     if status == "OK":
         color = Colors.OKGREEN
         symbol = "✅"
@@ -36,135 +36,134 @@ def print_status(component, status, message=""):
         color = Colors.FAIL
         symbol = "❌"
     
-    # Formatação alinhada
+    # Formatação tabular para leitura fácil
     print(f"{symbol} [{component.ljust(15)}] {color}{status.ljust(10)}{Colors.ENDC} {message}")
 
 def check_command(command, version_flag="--version"):
     """
-    Verifica se um comando existe no PATH e retorna sua versão.
-    Retorna: (bool_sucesso, string_versao)
+    Verifica se um comando existe no PATH e retorna sua versão limpa.
     """
     try:
-        # shell=True necessário para Windows reconhecer comandos do sistema
+        # shell=True garante compatibilidade Windows/Linux
         result = subprocess.run(
             f"{command} {version_flag}", 
             shell=True, 
             capture_output=True, 
-            text=True, 
-            encoding='utf-8', 
-            errors='ignore' # Evita crash com caracteres estranhos
+            text=True,
+            encoding='utf-8',
+            errors='ignore'
         )
         
         if result.returncode == 0:
-            # Pega a primeira linha da saída, que geralmente contém a versão
-            version_output = result.stdout.strip().split('\n')[0]
-            if not version_output: # Fallback para stderr se stdout estiver vazio
-                version_output = result.stderr.strip().split('\n')[0]
-            return True, version_output
+            # Pega a primeira linha da saída
+            output = result.stdout.strip().split('\n')[0]
+            if not output: 
+                output = result.stderr.strip().split('\n')[0]
+            return True, output
         else:
             return False, None
     except Exception:
         return False, None
 
-def check_directory_structure():
-    """Verifica se a estrutura de pastas do Marco Zero existe."""
-    required_dirs = ["backend", "frontend", "docs", "scripts"]
-    print(f"\n{Colors.HEADER}--- 2. VALIDAÇÃO ESTRUTURAL (MARCO ZERO v3.0) ---{Colors.ENDC}")
-    
-    all_dirs_ok = True
-    # Assume que o script está rodando de /scripts ou da raiz. 
-    # Tenta localizar a raiz baseada na localização deste arquivo.
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    root_dir = os.path.dirname(current_dir) # Sobe um nível para a raiz do projeto
-    
-    for folder in required_dirs:
-        target_path = os.path.join(root_dir, folder)
-        if os.path.isdir(target_path):
-            print_status(f"DIR: {folder}", "OK", "Estrutura presente")
-        else:
-            print_status(f"DIR: {folder}", "ALERTA", "Diretório não encontrado (Criar antes de iniciar)")
-            all_dirs_ok = False
-    return all_dirs_ok
-
 def main():
+    # Limpa a tela antes de começar (Cross-platform)
     os.system('cls' if os.name == 'nt' else 'clear')
+    
     print(f"{Colors.BOLD}{Colors.HEADER}="*70)
-    print("   🛡️  CyberTreinaIA - VERIFICADOR DE AMBIENTE (SVA)")
+    print("   🛡️  CyberTreinaIA - VERIFICADOR DE AMBIENTE (SVA v3.0)")
     print("   PROJETO: SAÚDE CICLO DA VIDA | GOVERNANÇA: ATIVA")
     print("="*70 + f"{Colors.ENDC}")
 
     global_success = True
 
     # ---------------------------------------------------------
-    # 1. VERIFICAÇÃO DE FERRAMENTAS (ARSENAL TECNOLÓGICO)
+    # 1. VALIDAÇÃO DE FERRAMENTAS (ARSENAL TECNOLÓGICO)
     # ---------------------------------------------------------
     print(f"\n{Colors.HEADER}--- 1. ARSENAL TECNOLÓGICO (VALIDAÇÃO DE BINÁRIOS) ---{Colors.ENDC}")
 
-    # A. Python (Automação & IA)
+    # A. Python
     py_version = sys.version.split()[0]
     if sys.version_info >= (3, 10):
-        print_status("PYTHON", "OK", f"Versão Detectada: {py_version}")
+        print_status("PYTHON", "OK", f"Versão: {py_version}")
     else:
-        print_status("PYTHON", "ERRO", f"Versão Obsoleta: {py_version} (Requer 3.10+)")
+        print_status("PYTHON", "ERRO", f"Versão Obsoleta: {py_version}")
         global_success = False
 
-    # B. Node.js (Backend NestJS)
+    # B. Node.js (Essencial para NestJS, NextJS e React Native)
     node_ok, node_ver = check_command("node", "-v")
     if node_ok:
-        print_status("NODE.JS", "OK", f"Motor Backend: {node_ver}")
+        print_status("NODE.JS", "OK", f"Engine: {node_ver}")
     else:
-        print_status("NODE.JS", "ERRO", "Necessário para NestJS. Não encontrado.")
+        print_status("NODE.JS", "ERRO", "Não instalado. Essencial para o projeto.")
         global_success = False
 
-    # C. Git (Governança)
+    # C. Git
     git_ok, git_ver = check_command("git", "--version")
     if git_ok:
-        print_status("GIT", "OK", f"Controle de Versão: {git_ver}")
+        print_status("GIT", "OK", f"Version Control: {git_ver}")
     else:
-        print_status("GIT", "ERRO", "Ferramenta Crítica Ausente.")
+        print_status("GIT", "ERRO", "Git não encontrado.")
         global_success = False
 
-    # D. Docker (Infraestrutura)
-    docker_ok, docker_ver = check_command("docker", "--version")
-    if docker_ok:
-        print_status("DOCKER", "OK", f"Container Engine: {docker_ver}")
+    # D. NPM (Gerenciador de Pacotes)
+    npm_ok, npm_ver = check_command("npm", "-v")
+    if npm_ok:
+        print_status("NPM", "OK", f"Package Manager: {npm_ver}")
     else:
-        print_status("DOCKER", "ERRO", "Necessário para Banco de Dados. Não encontrado.")
-        global_success = False
-
-    # E. Flutter (Frontend Mobile)
-    # Usamos --version pois 'doctor' é muito lento para verificação rápida
-    flutter_ok, flutter_ver = check_command("flutter", "--version")
-    if flutter_ok:
-        # Limpa string longa do flutter
-        clean_ver = flutter_ver.split('•')[0].strip() if '•' in flutter_ver else flutter_ver
-        print_status("FLUTTER", "OK", f"Framework Mobile: {clean_ver}")
-    else:
-        print_status("FLUTTER", "ERRO", "SDK Flutter não encontrado no PATH.")
+        print_status("NPM", "ERRO", "NPM não encontrado.")
         global_success = False
 
     # ---------------------------------------------------------
-    # 2. VALIDAÇÃO ESTRUTURAL
+    # 2. VALIDAÇÃO ESTRUTURAL (PASTAS DO PROJETO)
     # ---------------------------------------------------------
-    struct_ok = check_directory_structure()
-    if not struct_ok:
-        global_success = False
+    print(f"\n{Colors.HEADER}--- 2. VALIDAÇÃO ESTRUTURAL (PASTAS) ---{Colors.ENDC}")
+    
+    # Lista atualizada com a realidade do projeto
+    required_dirs = ["backend", "mobile", "web-admin", "scripts"]
+    
+    # Identifica a raiz do projeto
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(current_dir)
+    
+    for folder in required_dirs:
+        target_path = os.path.join(root_dir, folder)
+        if os.path.isdir(target_path):
+            print_status(f"DIR: {folder}", "OK", "Módulo Presente")
+        else:
+            print_status(f"DIR: {folder}", "ALERTA", "Diretório não encontrado!")
+            global_success = False
 
     # ---------------------------------------------------------
-    # 3. VEREDITO FINAL (NORMA EXTREMO ZERO)
+    # 3. VALIDAÇÃO DE ARQUIVOS CRÍTICOS
+    # ---------------------------------------------------------
+    print(f"\n{Colors.HEADER}--- 3. ARQUIVOS DE CONFIGURAÇÃO ---{Colors.ENDC}")
+    
+    # Backend Package
+    if os.path.exists(os.path.join(root_dir, "backend", "package.json")):
+        print_status("BACKEND PKG", "OK", "package.json encontrado")
+    else:
+        print_status("BACKEND PKG", "ERRO", "Arquivo crítico ausente")
+        global_success = False
+
+    # Mobile App.tsx
+    if os.path.exists(os.path.join(root_dir, "mobile", "App.tsx")):
+        print_status("MOBILE APP", "OK", "App.tsx encontrado")
+    else:
+        print_status("MOBILE APP", "ALERTA", "App.tsx não encontrado (verifique estrutura)")
+
+    # ---------------------------------------------------------
+    # 4. VEREDITO FINAL
     # ---------------------------------------------------------
     print(f"\n{Colors.BOLD}{Colors.HEADER}="*70)
     print("   VEREDITO DO ARQUITETO")
     print("="*70 + f"{Colors.ENDC}")
 
     if global_success:
-        print(f"\n{Colors.OKGREEN}✅ STATUS VERDE: AMBIENTE APROVADO PARA DESENVOLVIMENTO.{Colors.ENDC}")
+        print(f"\n{Colors.OKGREEN}✅ STATUS VERDE: AMBIENTE APROVADO.{Colors.ENDC}")
         print("   O Engenheiro está autorizado a iniciar a codificação.")
-        sys.exit(0)
     else:
-        print(f"\n{Colors.FAIL}🛑 STATUS VERMELHO: AMBIENTE CORROMPIDO OU INCOMPLETO.{Colors.ENDC}")
-        print("   AÇÃO NECESSÁRIA: Corrija as dependências acima antes de prosseguir.")
-        print("   VIOLAÇÃO DA CLÁUSULA 1.2 DA PGT-01.")
+        print(f"\n{Colors.FAIL}🛑 STATUS VERMELHO: AMBIENTE IRREGULAR.{Colors.ENDC}")
+        print("   AÇÃO: Corrija os erros acima antes de continuar.")
         sys.exit(1)
 
 if __name__ == "__main__":

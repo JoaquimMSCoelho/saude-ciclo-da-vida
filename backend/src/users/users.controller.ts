@@ -1,24 +1,43 @@
-// ARQUIVO: src/users/users.controller.ts
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+/**
+ * -------------------------------------------------------------------------
+ * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+ * ARQUITETURA: BACKEND (Controller Layer)
+ * GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
+ * -------------------------------------------------------------------------
+ * MÓDULO: USERS CONTROLLER
+ * DESCRIÇÃO: Recebe os pedidos HTTP e chama o Service.
+ * -------------------------------------------------------------------------
+ */
+
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post() // Quando alguém enviar dados para /users
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @Post()
+  create(@Body() data: any) {
+    return this.usersService.create(data);
   }
 
-  @Get() // Quando alguém acessar /users
+  @Get()
   findAll() {
     return this.usersService.findAll();
   }
 
-  @Get(':id') // Quando alguém acessar /users/123
+  @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.usersService.update(id, data);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(id);
   }
 }
