@@ -1,41 +1,31 @@
-// ARQUIVO: src/auth/auth.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
+/*
+-------------------------------------------------------------------------
+MÓDULO: AUTH SERVICE
+DESCRIÇÃO: Lógica de login e geração de Token JWT.
+-------------------------------------------------------------------------
+*/
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private jwtService: JwtService) {}
 
-  async login(loginDto: LoginDto) {
-    // 1. Buscar o usuário no banco pelo email
-    const user = await this.usersService.findByEmail(loginDto.email);
-
-    // 2. Se não achar o usuário, nega o acesso
-    if (!user) {
-      throw new UnauthorizedException('Email ou senha incorretos');
+  // Função simples para testar (Login Fake)
+  // Futuramente ligaremos ao Banco de Dados
+  async validateUser(email: string, pass: string): Promise<any> {
+    // SIMULAÇÃO: Se a senha for "123456", deixa passar.
+    if (pass === '123456') {
+      return { id: 'user-id-1', email: email, name: 'João da Silva' };
     }
+    return null;
+  }
 
-    // 3. Verificar a senha (Simples por enquanto)
-    // ATENÇÃO: Em breve usaremos criptografia (Bcrypt) aqui.
-    if (user.password !== loginDto.password) {
-      throw new UnauthorizedException('Email ou senha incorretos');
-    }
-
-    // 4. Se chegou aqui, deu tudo certo! Vamos gerar o Token.
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    
+  async login(user: any) {
+    const payload = { email: user.email, sub: user.id };
     return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
-      }
+      access_token: this.jwtService.sign(payload), // Gera o código criptografado
+      user: user
     };
   }
 }

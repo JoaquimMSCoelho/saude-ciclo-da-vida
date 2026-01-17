@@ -1,30 +1,25 @@
-/**
- * -------------------------------------------------------------------------
- * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
- * ARQUITETURA: BACKEND (Module Layer)
- * -------------------------------------------------------------------------
- * MÓDULO: AUTH MODULE
- * DESCRIÇÃO: Gerencia Login e Tokens JWT.
- * -------------------------------------------------------------------------
- */
-
+/*
+-------------------------------------------------------------------------
+MÓDULO: AUTH MODULE (CONFIGURAÇÃO)
+DESCRIÇÃO: Agrupa as ferramentas de segurança (Passport, JWT).
+-------------------------------------------------------------------------
+*/
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { UsersModule } from '../users/users.module'; // Importando o vizinho
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy, jwtConstants } from './jwt.strategy';
 
 @Module({
   imports: [
-    UsersModule, // <--- CRÍTICO: Traz o UsersService para cá
     PassportModule,
     JwtModule.register({
-      secret: 'segredo_super_secreto_dev', // Em produção usamos variáveis de ambiente (.env)
-      signOptions: { expiresIn: '1d' },    // Token dura 1 dia
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '1d' }, // O token expira em 1 dia
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy], // Adicionamos a Strategy aqui
 })
 export class AuthModule {}
