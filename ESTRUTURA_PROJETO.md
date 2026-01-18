@@ -3,12 +3,15 @@
 
 ```text
     📄 docker-compose.yml
+    📄 ESTRUTURA_PROJETO.md
+    📄 ESTRUTURA_PROJETOv1.md
     📄 PADROES.md
     📄 README.md
     📂 backend/
         📄 .env
         📄 .gitignore
         📄 .prettierrc
+        📄 docker-compose.yml
         📄 eslint.config.mjs
         📄 nest-cli.json
         📄 package-lock.json
@@ -18,6 +21,11 @@
         📄 tsconfig.json
         📂 prisma/
             📄 schema.prisma
+            📄 seed.ts
+            📂 migrations/
+                📄 migration_lock.toml
+                📂 20260117033303_init_full_ecosystem/
+                    📄 migration.sql
         📂 src/
             📄 app.controller.spec.ts
             📄 app.controller.ts
@@ -26,8 +34,10 @@
             📄 main.ts
             📄 prisma.service.ts
             📂 alerts/
+                📄 alerts.controller.spec.ts
                 📄 alerts.controller.ts
                 📄 alerts.module.ts
+                📄 alerts.service.spec.ts
                 📄 alerts.service.ts
                 📂 dto/
                     📄 create-alert.dto.ts
@@ -40,11 +50,14 @@
                 📄 auth.module.ts
                 📄 auth.service.spec.ts
                 📄 auth.service.ts
+                📄 jwt.strategy.ts
                 📂 dto/
                     📄 login.dto.ts
             📂 users/
+                📄 users.controller.spec.ts
                 📄 users.controller.ts
                 📄 users.module.ts
+                📄 users.service.spec.ts
                 📄 users.service.ts
                 📂 dto/
                     📄 create-user.dto.ts
@@ -305,6 +318,52 @@
                 📄 LoginScreen.tsx
             📂 services/
                 📄 api.ts
+    📂 mobile-patient/
+        📄 .gitignore
+        📄 app.json
+        📄 eslint.config.js
+        📄 package-lock.json
+        📄 package.json
+        📄 README.md
+        📄 tsconfig.json
+        📂 app/
+            📄 modal.tsx
+            📄 _layout.tsx
+            📂 (tabs)/
+                📄 explore.tsx
+                📄 index.tsx
+                📄 _layout.tsx
+        📂 assets/
+            📂 images/
+                📄 android-icon-background.png
+                📄 android-icon-foreground.png
+                📄 android-icon-monochrome.png
+                📄 favicon.png
+                📄 icon.png
+                📄 partial-react-logo.png
+                📄 react-logo.png
+                📄 react-logo@2x.png
+                📄 react-logo@3x.png
+                📄 splash-icon.png
+        📂 components/
+            📄 external-link.tsx
+            📄 haptic-tab.tsx
+            📄 hello-wave.tsx
+            📄 parallax-scroll-view.tsx
+            📄 themed-text.tsx
+            📄 themed-view.tsx
+            📂 ui/
+                📄 collapsible.tsx
+                📄 icon-symbol.ios.tsx
+                📄 icon-symbol.tsx
+        📂 constants/
+            📄 theme.ts
+        📂 hooks/
+            📄 use-color-scheme.ts
+            📄 use-color-scheme.web.ts
+            📄 use-theme-color.ts
+        📂 scripts/
+            📄 reset-project.js
     📂 scripts/
         📄 project_tree.py
         📄 verify_env.py
@@ -318,6 +377,9 @@
         📄 postcss.config.mjs
         📄 README.md
         📄 tsconfig.json
+        📂 .vercel/
+            📄 project.json
+            📄 README.txt
         📂 app/
             📄 favicon.ico
             📄 globals.css
@@ -329,8 +391,6 @@
             📄 next.svg
             📄 vercel.svg
             📄 window.svg
-        📂 services/
-            📄 api.ts
 ```
 
 _Fim do Mapeamento_

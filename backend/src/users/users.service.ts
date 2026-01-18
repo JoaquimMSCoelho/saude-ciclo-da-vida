@@ -1,59 +1,69 @@
-import { Injectable } from '@nestjs/common';
+/**
+ * -------------------------------------------------------------------------
+ * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+ * ARQUITETURA: DATA LAYER (NestJS + Prisma)
+ * GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
+ * -------------------------------------------------------------------------
+ * MÓDULO: USERS SERVICE
+ * DESCRIÇÃO: Centraliza busca de identidade e prontuário farmacêutico.
+ * -------------------------------------------------------------------------
+ */
+
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import * as bcrypt from 'bcrypt'; // Para criptografar senha se criar usuário novo
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  // Busca por e-mail (Usado no Login)
+  /**
+   * PGT-01: Segurança e Identidade.
+   * Utilizado pelo AuthService para localização de hash de senha.
+   */
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
-    });
+    try {
+      return await this.prisma.user.findUnique({
+        where: { email },
+      });
+    } catch (error) {
+      console.error(`[ERRO CRÍTICO] Falha ao buscar e-mail: ${error.message}`);
+      throw new InternalServerErrorException('Falha na comunicação com o banco de dados.');
+    }
   }
 
-  // Cria usuário (Criptografando a senha)
-  async create(data: CreateUserDto) {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    return this.prisma.user.create({
-      data: {
-        ...data,
-        password: hashedPassword,
-      },
-    });
+  /**
+   * PGT-01: Fonte Única de Verdade.
+   * Busca medicamentos vinculados ao UUID do usuário com horários integrados.
+   */
+  async findUserMedications(userId: string) {
+    try {
+      const userExists = await this.prisma.user.findUnique({ where: { id: userId } });
+      
+      if (!userExists) {
+        throw new NotFoundException('Usuário não localizado no ecossistema.');
+      }
+
+      return await this.prisma.medication.findMany({
+        where: { userId },
+        include: {
+          schedules: true, // Garante que horários (ex: 08:00) venham do PostgreSQL
+        },
+        orderBy: { name: 'asc' }
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      
+      console.error(`[ERRO CRÍTICO] Falha ao buscar prontuário farmacêutico: ${error.message}`);
+      throw new InternalServerErrorException('Erro interno ao processar dados de saúde.');
+    }
   }
 
-  findAll() {
+  // Métodos CRUD simplificados para manutenção futura
+  async findAll() {
     return this.prisma.user.findMany();
   }
 
-  // MUDANÇA AQUI: id: string
-  findOne(id: string) { 
-    return this.prisma.user.findUnique({
-      where: { id },
-      include: { profile: true } // Já traz o perfil junto
-    });
-  }
-
-  // MUDANÇA AQUI: id: string
-  async update(id: string, data: UpdateUserDto) {
-    // Se estiver atualizando senha, precisa criptografar de novo
-    if (data.password) {
-      data.password = await bcrypt.hash(data.password, 10);
-    }
-    return this.prisma.user.update({
-      where: { id },
-      data,
-    });
-  }
-
-  // MUDANÇA AQUI: id: string
-  remove(id: string) {
-    return this.prisma.user.delete({
-      where: { id },
-    });
+  async findOne(id: string) {
+    return this.prisma.user.findUnique({ where: { id }, include: { profile: true } });
   }
 }

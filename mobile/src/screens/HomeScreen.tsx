@@ -1,115 +1,57 @@
-// ARQUIVO: mobile/src/screens/HomeScreen.tsx
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Vibration, ActivityIndicator } from 'react-native';
-import * as Location from 'expo-location'; // Biblioteca do GPS
-import api from '../services/api'; // Nossa conexão com o Backend
+/**
+ * -------------------------------------------------------------------------
+ * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+ * MÓDULO: DASHBOARD PRINCIPAL (HOME)
+ * GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO) - PADRÃO FIGMA
+ * -------------------------------------------------------------------------
+ */
 
-export default function HomeScreen({ navigation, route }: any) {
-  const [pressing, setPressing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+import React from 'react';
+import { View, Text, TouchableOpacity, Image, StatusBar } from 'react-native';
+import { styles, COLORS } from '../styles/global';
 
-  // 1. Ao abrir a tela, pede permissão do GPS
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Erro', 'Precisamos da permissão de localização para o botão funcionar!');
-        return;
-      }
-
-      // Tenta pegar uma localização rápida só para ligar o sensor
-      let loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc);
-    })();
-  }, []);
-
-  const handlePanic = async () => {
-    // Feedback Físico (Vibração)
-    Vibration.vibrate(500);
-    setLoading(true);
-
-    try {
-      // 2. Pega a localização EXATA no momento do clique
-      const currentLocation = await Location.getCurrentPositionAsync({});
-      
-      // 3. Pega o ID do usuário que veio do Login
-      // Se por acaso vier vazio, usamos um fallback ou avisamos o erro
-      const userId = route.params?.userId; 
-
-      if (!userId) {
-        Alert.alert('Erro', 'Usuário não identificado. Faça login novamente.');
-        setLoading(false);
-        return;
-      }
-
-      console.log('Enviando para o Backend...', {
-        lat: currentLocation.coords.latitude,
-        long: currentLocation.coords.longitude,
-        user: userId
-      });
-
-      // 4. ENVIA PARA O BACKEND REAL
-      await api.post('/alerts', {
-        latitude: currentLocation.coords.latitude,
-        longitude: currentLocation.coords.longitude,
-        userId: userId
-      });
-
-      setLoading(false);
-      // MENSAGEM NOVA - PROVA DE QUE O CÓDIGO ATUALIZOU
-      Alert.alert('SUCESSO', '🚨 SOCORRO SOLICITADO! \nSua localização foi gravada no banco de dados.');
-
-    } catch (error) {
-      setLoading(false);
-      console.log(error);
-      Alert.alert('Falha', 'Não foi possível enviar o alerta. Verifique se o Backend está rodando.');
-    }
-  };
+export default function HomeScreen({ route, navigation }) {
+  const { user } = route.params;
+  const nameParts = user.name.split(' ');
+  const displayName = `${nameParts[0]} ${nameParts[1] || ''}`;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>Sistema Ativo</Text>
-        <TouchableOpacity onPress={() => navigation.replace('Login')}>
-          <Text style={styles.logoutText}>Sair</Text>
-        </TouchableOpacity>
+    <View style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.dashHeader}>
+        <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ fontSize: 18, fontWeight: '600', color: '#003366' }}>Olá, {displayName}.</Text>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('Panic', { user })} 
+            style={{ backgroundColor: COLORS.danger, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 25, elevation: 5 }}>
+            <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 13 }}>SOS</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* CORREÇÃO DO CAMINHO DA LOGO (IMAGEM 8) */}
+        <Image source={require('../../assets/LogoApp.png')} style={{ width: 100, height: 100, marginTop: 15 }} />
+        <Text style={{ fontSize: 24, fontWeight: 'bold', marginTop: 10, color: '#003366' }}>Saúde Ciclo da Vida</Text>
       </View>
 
-      <View style={styles.content}>
-        <Text style={styles.instruction}>EMERGÊNCIA</Text>
-        <Text style={styles.subInstruction}>
-           {location ? 'GPS Calibrado ✅' : 'Buscando Satélites...'}
-        </Text>
-
-        <TouchableOpacity 
-          style={[styles.panicButton, pressing && styles.panicButtonPressed]}
-          onPress={handlePanic}
-          onPressIn={() => setPressing(true)}
-          onPressOut={() => setPressing(false)}
-          activeOpacity={0.8}
-          disabled={loading}
-        >
-          {loading ? (
-             <ActivityIndicator size="large" color="#FFF" />
-          ) : (
-             <Text style={styles.panicText}>SOS</Text>
-          )}
-        </TouchableOpacity>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', padding: 20, marginTop: 20 }}>
+        {['Medicamentos', 'Consulta', 'Dieta', 'Perfil'].map((item) => (
+          <TouchableOpacity 
+            key={item} 
+            style={styles.cardFigma} 
+            onPress={() => item === 'Medicamentos' && navigation.navigate('Medication', { user })}>
+            <Text style={{ fontWeight: 'bold', fontSize: 18, color: COLORS.textDark }}>{item}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      
+      <View style={{ position: 'absolute', bottom: 30, alignSelf: 'center', width: '92%', flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#FFF', padding: 18, borderRadius: 30, elevation: 10 }}>
+        {['Home', 'Agenda', 'Config'].map(tab => (
+          <View key={tab} style={{ alignItems: 'center' }}>
+            <View style={{ width: 50, height: 25, backgroundColor: COLORS.primary, borderRadius: 8 }} />
+            <Text style={{ fontSize: 13, marginTop: 5, color: '#666', fontWeight: 'bold' }}>{tab}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F6FA' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', padding: 20, paddingTop: 50, backgroundColor: '#FFF' },
-  welcomeText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  logoutText: { color: 'red', fontWeight: 'bold' },
-  content: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  instruction: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 10 },
-  subInstruction: { fontSize: 14, color: '#666', marginBottom: 40 },
-  panicButton: { width: 200, height: 200, borderRadius: 100, backgroundColor: '#FF3B30', justifyContent: 'center', alignItems: 'center', borderWidth: 5, borderColor: '#FF8A84', elevation: 10 },
-  panicButtonPressed: { backgroundColor: '#D32F2F', transform: [{ scale: 0.95 }] },
-  panicText: { color: '#FFF', fontSize: 48, fontWeight: 'bold' },
-});
