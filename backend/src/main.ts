@@ -24,7 +24,7 @@ async function bootstrap() {
   });
   // ----------------------------------------
 
-  await app.listen(3000);
-  console.log('🚀 BACKEND OPERACIONAL: http://localhost:3000');
+  await app.listen(3000, '0.0.0.0'); // O '0.0.0.0' é fundamental para o celular conectar
+console.log(`🚀 BACKEND OPERACIONAL: http://192.168.15.8:3000`);
 }
 bootstrap();

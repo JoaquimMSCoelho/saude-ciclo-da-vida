@@ -1,61 +1,59 @@
-/**
- * -------------------------------------------------------------------------
- * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
- * ARQUITETURA: BACKEND (Service Layer)
- * -------------------------------------------------------------------------
- * MÓDULO: USERS SERVICE (v2.0)
- * DESCRIÇÃO: Regras de negócio + Método especial para Auth (Login).
- * -------------------------------------------------------------------------
- */
-
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt'; // Para criptografar senha se criar usuário novo
 
 @Injectable()
 export class UsersService {
-  private prisma = new PrismaClient();
+  constructor(private prisma: PrismaService) {}
 
-  // --- MÉTODO ESPECIAL PARA O AUTH (LOGIN) ---
-  // Busca usuário pelo email para verificar senha
+  // Busca por e-mail (Usado no Login)
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
     });
   }
-  // --------------------------------------------
 
-  // 1. CRIAR USUÁRIO
-  async create(data: any) {
-    return this.prisma.user.create({ data });
-  }
-
-  // 2. LISTAR TODOS
-  async findAll() {
-    return this.prisma.user.findMany({
-      include: { profile: true },
-    });
-  }
-
-  // 3. BUSCAR UM PELO ID
-  async findOne(id: string) {
-    return this.prisma.user.findUnique({
-      where: { id },
-      include: {
-        profile: true,
-        medications: true,
-        emergencyContacts: true,
-        carePlans: true,
+  // Cria usuário (Criptografando a senha)
+  async create(data: CreateUserDto) {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    return this.prisma.user.create({
+      data: {
+        ...data,
+        password: hashedPassword,
       },
     });
   }
 
-  // 4. ATUALIZAR
-  async update(id: string, data: any) {
-    return this.prisma.user.update({ where: { id }, data });
+  findAll() {
+    return this.prisma.user.findMany();
   }
 
-  // 5. REMOVER
-  async remove(id: string) {
-    return this.prisma.user.delete({ where: { id } });
+  // MUDANÇA AQUI: id: string
+  findOne(id: string) { 
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { profile: true } // Já traz o perfil junto
+    });
+  }
+
+  // MUDANÇA AQUI: id: string
+  async update(id: string, data: UpdateUserDto) {
+    // Se estiver atualizando senha, precisa criptografar de novo
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
+
+  // MUDANÇA AQUI: id: string
+  remove(id: string) {
+    return this.prisma.user.delete({
+      where: { id },
+    });
   }
 }

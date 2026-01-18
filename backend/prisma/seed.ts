@@ -5,7 +5,7 @@
  * GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
  * -------------------------------------------------------------------------
  * MÓDULO: GÊNESE DE DADOS (SEED)
- * DESCRIÇÃO: Popula o banco com:
+ * DESCRIÇÃO: Popula o banco com dados reais e senhas criptografadas (Bcrypt)
  * 1. Paciente (Seu João)
  * 2. Cuidadora (Maria)
  * 3. Vínculo de Cuidado
@@ -14,27 +14,35 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 INICIANDO A GÊNESE DE DADOS...');
 
-  // 1. Limpar dados antigos (opcional, mas bom para testes)
-  // Deletamos na ordem reversa para não quebrar relacionamentos
+  // 1. Limpar dados antigos (Ordem reversa para integridade referencial)
   await prisma.panicAlert.deleteMany();
+  await prisma.intakeLog.deleteMany();
+  await prisma.medicationSchedule.deleteMany();
   await prisma.medication.deleteMany();
   await prisma.careRelationship.deleteMany();
   await prisma.patientProfile.deleteMany();
+  await prisma.emergencyContact.deleteMany();
   await prisma.user.deleteMany();
 
   console.log('🧹 Banco limpo com sucesso.');
 
-  // 2. CRIAR A CUIDADORA (MARIA)
+  // 2. GERAR HASH DE SENHA (PADRÃO 123456)
+  // Essencial para que o AuthService consiga validar o login
+  const saltRounds = 10;
+  const commonPasswordHash = await bcrypt.hash('123456', saltRounds);
+
+  // 3. CRIAR A CUIDADORA (MARIA)
   const maria = await prisma.user.create({
     data: {
       email: 'maria.filha@email.com',
-      password: 'hash_da_senha_123', // Em produção, usaríamos bcrypt
+      password: commonPasswordHash, // Senha real criptografada
       name: 'Maria da Silva',
       role: 'FAMILIAR',
       photoUrl: 'https://i.pravatar.cc/150?u=maria',
@@ -42,11 +50,11 @@ async function main() {
   });
   console.log(`👤 Cuidadora criada: ${maria.name}`);
 
-  // 3. CRIAR O PACIENTE (SEU JOÃO)
+  // 4. CRIAR O PACIENTE (SEU JOÃO)
   const joao = await prisma.user.create({
     data: {
       email: 'joao.pai@email.com',
-      password: 'hash_da_senha_123',
+      password: commonPasswordHash, // Senha real criptografada
       name: 'João da Silva',
       role: 'PACIENTE',
       photoUrl: 'https://i.pravatar.cc/150?u=joao',
@@ -72,7 +80,7 @@ async function main() {
   });
   console.log(`👴 Paciente criado: ${joao.name}`);
 
-  // 4. VINCULAR MARIA CUIDANDO DE JOÃO
+  // 5. VINCULAR MARIA CUIDANDO DE JOÃO
   await prisma.careRelationship.create({
     data: {
       caregiverId: maria.id,
@@ -83,7 +91,7 @@ async function main() {
   });
   console.log('🔗 Vínculo criado: Maria -> cuida de -> João');
 
-  // 5. CADASTRAR UM REMÉDIO PARA O JOÃO
+  // 6. CADASTRAR UM REMÉDIO PARA O JOÃO
   await prisma.medication.create({
     data: {
       userId: joao.id,
@@ -91,7 +99,7 @@ async function main() {
       dosage: '50mg',
       stockCurrent: 28,
       stockMin: 5,
-      prescriptionExpires: new Date('2026-06-01T00:00:00Z'), // Vence em Junho
+      prescriptionExpires: new Date('2026-06-01T00:00:00Z'),
       schedules: {
         create: [
           { time: '08:00', frequency: 'Diário', instructions: 'Tomar após café' },
@@ -102,11 +110,11 @@ async function main() {
   });
   console.log('💊 Remédio cadastrado: Losartana');
 
-  // 6. GERAR UM ALERTA DE PÂNICO (PARA A TORRE VER)
+  // 7. GERAR UM ALERTA DE PÂNICO (PARA A TORRE VER)
   await prisma.panicAlert.create({
     data: {
       userId: joao.id,
-      latitude: -22.7, // Piracicaba simulada
+      latitude: -22.7, 
       longitude: -47.6,
       resolved: false,
       batteryLevel: 15,
