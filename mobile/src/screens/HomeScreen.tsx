@@ -1,57 +1,121 @@
-/**
- * -------------------------------------------------------------------------
- * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
- * MÓDULO: DASHBOARD PRINCIPAL (HOME)
- * GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO) - PADRÃO FIGMA
- * -------------------------------------------------------------------------
- */
-
+// -------------------------------------------------------------------------
+// TELA: HOME (VERSÃO FINAL - LOGO GERAL + NOME USUÁRIO ESQUERDA)
+// -------------------------------------------------------------------------
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StatusBar } from 'react-native';
-import { styles, COLORS } from '../styles/global';
+import { View, Text, TouchableOpacity, Image, StatusBar, ScrollView, Alert, StyleSheet } from 'react-native';
+import { LogOut } from 'lucide-react-native'; 
+import PanicButtonSmall from '../components/PanicButtonSmall';
+import { styles as globalStyles, COLORS } from '../styles/global';
 
-export default function HomeScreen({ route, navigation }) {
-  const { user } = route.params;
-  const nameParts = user.name.split(' ');
-  const displayName = `${nameParts[0]} ${nameParts[1] || ''}`;
+export default function HomeScreen({ route, navigation }: any) {
+  const { user, token } = route.params || { user: { name: 'Visitante' } };
+  const firstName = user.name ? user.name.split(' ')[0] : 'Usuário';
+
+  const handleLogout = () => {
+    Alert.alert('Sair', 'Encerrar sessão?', [
+      { text: 'Não', style: 'cancel' },
+      { text: 'Sim, Sair', style: 'destructive', onPress: () => navigation.replace('Login') }
+    ]);
+  };
+
+  const menuItems = [
+    { title: 'Medicamentos', icon: '💊', route: 'Medication' },
+    { title: 'Plano Alimentar', icon: '🍎', route: null }, 
+    { title: 'Agenda Médica', icon: '📅', route: null },
+    { title: 'Dados Vitais', icon: '❤️', route: null },
+  ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.dashHeader}>
-        <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#003366' }}>Olá, {displayName}.</Text>
-          <TouchableOpacity 
-            onPress={() => navigation.navigate('Panic', { user })} 
-            style={{ backgroundColor: COLORS.danger, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 25, elevation: 5 }}>
-            <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 13 }}>SOS</Text>
-          </TouchableOpacity>
-        </View>
+    <View style={globalStyles.container}>
+      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
+      
+      {/* 1. HEADER (Nome na esquerda, Sair discreto) */}
+      <View style={styles.headerTop}>
+        <Text style={styles.greetingText}>Olá, {firstName}</Text>
         
-        {/* CORREÇÃO DO CAMINHO DA LOGO (IMAGEM 8) */}
-        <Image source={require('../../assets/LogoApp.png')} style={{ width: 100, height: 100, marginTop: 15 }} />
-        <Text style={{ fontSize: 24, fontWeight: 'bold', marginTop: 10, color: '#003366' }}>Saúde Ciclo da Vida</Text>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <LogOut size={20} color="#dc2626" />
+          <Text style={styles.logoutText}>SAIR</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', padding: 20, marginTop: 20 }}>
-        {['Medicamentos', 'Consulta', 'Dieta', 'Perfil'].map((item) => (
-          <TouchableOpacity 
-            key={item} 
-            style={styles.cardFigma} 
-            onPress={() => item === 'Medicamentos' && navigation.navigate('Medication', { user })}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18, color: COLORS.textDark }}>{item}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      
-      <View style={{ position: 'absolute', bottom: 30, alignSelf: 'center', width: '92%', flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#FFF', padding: 18, borderRadius: 30, elevation: 10 }}>
-        {['Home', 'Agenda', 'Config'].map(tab => (
-          <View key={tab} style={{ alignItems: 'center' }}>
-            <View style={{ width: 50, height: 25, backgroundColor: COLORS.primary, borderRadius: 8 }} />
-            <Text style={{ fontSize: 13, marginTop: 5, color: '#666', fontWeight: 'bold' }}>{tab}</Text>
-          </View>
-        ))}
-      </View>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 0 }}>
+        
+        {/* 2. ÁREA DA MARCA (Logo Geral + Texto) */}
+        <View style={styles.brandArea}>
+          <Image 
+            source={require('../../assets/LogoAppGeral.png')} 
+            style={styles.logoGeral} // W:100, H:100
+          />
+          <Text style={styles.appTitle}>Saúde Ciclo da Vida</Text>
+        </View>
+
+        {/* 3. GRID DE MENU */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 30 }}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={globalStyles.cardFigma}
+              onPress={() => item.route && navigation.navigate(item.route, { user, token })}
+              activeOpacity={0.8}
+            >
+              <Text style={{ fontSize: 32, marginBottom: 10 }}>{item.icon}</Text>
+              <Text style={{ fontWeight: 'bold', fontSize: 15, color: '#000', textAlign: 'center' }}>{item.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+      </ScrollView>
+
+      {/* 4. BOTÃO SOS (Fixo no Rodapé) */}
+      <PanicButtonSmall 
+        onPress={() => navigation.navigate('Panic', { user, token })} 
+        disabled={false} 
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20, // Distância do topo
+  },
+  greetingText: {
+    fontSize: 18,
+    color: '#000',
+    fontWeight: '500',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    padding: 8,
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: '#dc2626',
+    fontWeight: 'bold',
+    fontSize: 12,
+    marginLeft: 5,
+  },
+  brandArea: {
+    alignItems: 'center',
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  logoGeral: {
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
+  },
+  appTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: 15,
+  }
+});

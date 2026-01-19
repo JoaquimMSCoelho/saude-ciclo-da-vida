@@ -1,47 +1,131 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StatusBar, ActivityIndicator, Alert } from 'react-native';
+// -------------------------------------------------------------------------
+// TELA: LOGIN (VERSÃO FINAL - LOGO COMPLETO)
+// -------------------------------------------------------------------------
+import React, { useState, useEffect } from 'react';
+import { 
+  View, TextInput, TouchableOpacity, Image, StatusBar, 
+  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, Text 
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import PanicButtonSmall from '../components/PanicButtonSmall';
 import api from '../services/api';
-import { styles } from '../styles/global';
+import { styles as globalStyles, COLORS } from '../styles/global';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('joao.pai@email.com');
   const [password, setPassword] = useState('123456');
   const [loading, setLoading] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+
+  useEffect(() => {
+    checkHistory();
+  }, []);
+
+  const checkHistory = async () => {
+    const registered = await AsyncStorage.getItem('@SCV:hasLogged');
+    if (registered === 'true') setHasAccess(true);
+  };
 
   const handleLogin = async () => {
     setLoading(true);
     try {
       const response = await api.post('/auth/login', { email, password });
-      navigation.replace('Home', { user: response.data.user });
+      await AsyncStorage.setItem('@SCV:hasLogged', 'true');
+      const { user, access_token } = response.data;
+      navigation.replace('Home', { user, token: access_token });
     } catch (error) {
-      Alert.alert("ERRO", "Falha na autenticação.");
+      Alert.alert('Erro de Acesso', 'Verifique suas credenciais.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: '#FFF' }]}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.loginHeader}>
-        <Image source={require('../../assets/LogoApp.png')} style={styles.loginLogo} />
-        <Text style={{ fontSize: 24, fontWeight: 'bold', marginTop: 15, color: '#003366' }}>Saúde Ciclo da Vida</Text>
-      </View>
-
-      <View style={styles.loginContent}>
-        <View style={styles.inputGroup}>
-          <TextInput value={email} onChangeText={setEmail} placeholder="E-mail ou CPF" style={styles.input} placeholderTextColor="#999" />
-        </View>
-        <View style={styles.inputGroup}>
-          <TextInput value={password} onChangeText={setPassword} placeholder="Senha" secureTextEntry style={styles.input} placeholderTextColor="#999" />
-        </View>
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#000" /> : <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#000' }}>ENTER</Text>}
-        </TouchableOpacity>
+    <View style={globalStyles.container}>
+      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
+      
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        style={styles.content}
+      >
         
-        <TouchableOpacity><Text style={styles.linkText}>Esqueci minha senha</Text></TouchableOpacity>
-        <TouchableOpacity><Text style={styles.linkText}>Ainda não tem conta? Cadastre-se</Text></TouchableOpacity>
-      </View>
+        {/* 1. LOGO PRINCIPAL (Já contém o texto "Saúde Ciclo da Vida") */}
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../../assets/LogoApp.png')} 
+            style={styles.logo} // W:170, H:250
+          />
+        </View>
+
+        {/* 2. FORMULÁRIO (Inputs Centralizados) */}
+        <View style={styles.formContainer}>
+          <TextInput 
+            style={globalStyles.input} 
+            placeholder="E-mail ou CPF"
+            placeholderTextColor="#6b7280" 
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+          />
+          
+          <TextInput 
+            style={globalStyles.input} 
+            placeholder="Senha" 
+            placeholderTextColor="#6b7280"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+          
+          <TouchableOpacity style={globalStyles.loginButton} onPress={handleLogin} disabled={loading}>
+            {loading ? <ActivityIndicator color="#000" /> : <Text style={globalStyles.loginButtonText}>ENTER</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={{ marginTop: 20 }}>
+            <Text style={styles.linkText}>Esqueci minha senha</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={{ marginTop: 30 }}>
+            <Text style={styles.linkText}>Ainda não tem conta? Cadastre-se</Text>
+          </TouchableOpacity>
+        </View>
+
+      </KeyboardAvoidingView>
+
+      {/* 3. BOTÃO SOS (Flutuante Canto Inferior Direito) */}
+      <PanicButtonSmall 
+        onPress={() => navigation.navigate('Panic', { user: { id: 'anon', name: 'Anonimo' } })} 
+        disabled={!hasAccess} 
+      />
+
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    width: '100%',
+  },
+  logoContainer: {
+    marginBottom: 40, // Espaço entre logo e campos
+    alignItems: 'center',
+  },
+  logo: {
+    width: 170,  // Largura exata do Figma
+    height: 250, // Altura exata do Figma
+    resizeMode: 'contain',
+  },
+  formContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '500',
+  }
+});

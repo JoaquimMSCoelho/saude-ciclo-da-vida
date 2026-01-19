@@ -1,64 +1,82 @@
-import { StyleSheet, Dimensions } from 'react-native';
-
-const { height, width } = Dimensions.get('window');
+// -------------------------------------------------------------------------
+// ARQUIVO: styles/global.tsx
+// TEMA: CLEAN MEDICAL V2 (BORDAS DEFINIDAS + TEXTO CENTRALIZADO)
+// -------------------------------------------------------------------------
+import { StyleSheet } from 'react-native';
 
 export const COLORS = {
-  primary: '#97FFFF',    // Ciano Figma (Brand Primary)
-  background: '#0f172a', // Azul Marinho Profundo (Imagem 5)
-  surface: '#1e293b',    // Fundo de Monitoramento
-  white: '#FFFFFF',      // Cards do Dashboard (Imagem 4)
-  danger: '#ef4444',     // SOS
-  gray: '#94a3b8',
-  textDark: '#333333'
+  background: '#FFFFFF',
+  primary: '#000000',    // Preto para textos principais
+  textDark: '#000000',
+  textLight: '#4b5563',
+  inputBackground: '#f3f4f6', // Cinza muito suave (quase branco)
+  borderColor: '#1f2937',     // Borda escura para contraste (conforme imagem)
+  danger: '#dc2626',
+  white: '#FFFFFF',
 };
 
 export const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   
-  // LOGIN PROPORCIONAL (Imagem 1)
-  loginHeader: { 
-    height: height * 0.38, 
-    backgroundColor: COLORS.primary, 
-    borderBottomLeftRadius: 45, 
-    borderBottomRightRadius: 45, 
-    alignItems: 'center', 
-    justifyContent: 'center' 
-  },
-  loginLogo: { width: 130, height: 130, resizeMode: 'contain' },
-  loginContent: { flex: 1, padding: 30, justifyContent: 'center' },
-  inputGroup: { 
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#e2e8f0', 
-    borderRadius: 15, padding: 18, marginBottom: 15 
-  },
-  input: { flex: 1, color: '#333', fontSize: 16 },
-  loginButton: { backgroundColor: '#cbd5e1', padding: 18, borderRadius: 15, alignItems: 'center' },
-  linkText: { color: '#333', textAlign: 'center', marginTop: 12, fontSize: 14, fontWeight: '500' },
-
-  // DASHBOARD (Imagem 3)
-  dashHeader: { 
-    backgroundColor: COLORS.primary, padding: 30, paddingTop: 60,
-    borderBottomLeftRadius: 40, borderBottomRightRadius: 40, alignItems: 'center'
-  },
-  cardFigma: { 
-    backgroundColor: COLORS.white, width: '46%', height: 150, borderRadius: 25, 
-    justifyContent: 'center', alignItems: 'center', marginBottom: 18, elevation: 6
+  // -- NOVOS INPUTS (Estilo "Caixa com Borda") --
+  input: {
+    width: '100%',
+    height: 55,
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 10,       // Cantos arredondados
+    borderWidth: 1,         // Borda fina
+    borderColor: '#333',    // Cor da borda
+    fontSize: 18,
+    color: '#000',
+    marginBottom: 15,
+    paddingHorizontal: 15,
+    textAlign: 'center',    // TEXTO CENTRALIZADO (Conforme sua imagem)
+    fontWeight: '600',      // Texto levemente negrito
   },
 
-  // SOS CENTRALIZADO (Imagem 5)
-  panicButtonV2: { 
-    width: 230, height: 230, borderRadius: 115, backgroundColor: '#dc2626', 
-    borderWidth: 6, borderColor: '#ef4444', justifyContent: 'center', alignItems: 'center',
-    elevation: 20, shadowColor: '#ef4444', shadowOpacity: 0.6, shadowRadius: 15
+  // -- BOTÃO ENTER (Cinza Sólido) --
+  loginButton: {
+    width: '100%',
+    height: 55,
+    backgroundColor: '#d1d5db', // Cinza médio
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 5,
+    elevation: 2, // Sombra leve Android
+    shadowColor: '#000', // Sombra leve iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  monitorFooter: { 
-    width: '92%', backgroundColor: COLORS.surface, borderRadius: 22, 
-    padding: 22, position: 'absolute', bottom: 35, alignSelf: 'center',
-    borderWidth: 1, borderColor: '#334155'
+  loginButtonText: {
+    color: '#000',     // Texto Preto
+    fontSize: 20,
+    fontWeight: '900', // Extra Negrito ("ENTER")
+    letterSpacing: 1,
   },
 
-  // BOTÃO SAIR (Imagem 7)
-  logoutBtn: { 
-    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(239, 68, 68, 0.15)', 
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 
+  // -- CARDS (Manteremos para uso futuro) --
+  cardFigma: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    width: '48%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f1f5f9'
   }
 });
