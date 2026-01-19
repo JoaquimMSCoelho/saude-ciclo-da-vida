@@ -1,56 +1,299 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StatusBar, Image } from 'react-native';
-import { ShieldAlert, Heart, Activity } from 'lucide-react-native';
-import { styles, COLORS } from '../styles/global';
+// -------------------------------------------------------------------------
+// ARQUIVO: mobile/src/screens/PanicScreen.tsx
+// TIPO: TELA DE EMERGÊNCIA (FINAL ENTERPRISE)
+// ATUALIZAÇÃO: Rota da API alterada para '/sos'
+// -------------------------------------------------------------------------
 
-export default function PanicScreen({ route, navigation }) {
-  const { user } = route.params;
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  StatusBar, 
+  Alert, 
+  Vibration 
+} from 'react-native';
+// Ícones Técnicos
+import { MapPin, Phone, XCircle, Siren, Heart, Signal } from 'lucide-react-native'; 
+import { styles as globalStyles } from '../styles/global';
+import api from '../services/api'; // Importação da API configurada
+
+export default function PanicScreen({ navigation, route }: any) {
+  const { user } = route.params || { user: { name: 'Usuário' } };
+  const [status, setStatus] = useState('AGUARDANDO AÇÃO');
+
+  // Efeito de Entrada (Vibração de Alerta)
+  useEffect(() => {
+    // Padrão de vibração: espera 0ms, vibra 500ms, pausa 200ms, vibra 500ms
+    Vibration.vibrate([0, 500, 200, 500]); 
+  }, []);
+
+  const handleCancel = () => {
+    Alert.alert('Cancelar', 'Deseja abortar o pedido de socorro?', [
+      { text: 'Não', style: 'cancel' },
+      { text: 'Sim, Abortar', onPress: () => navigation.goBack() }
+    ]);
+  };
+
+  const handleSOSAction = async () => {
+    setStatus('CONECTANDO SATÉLITE...');
+    Vibration.vibrate(1000); // Vibração longa de confirmação tátil
+
+    try {
+      // --- MUDANÇA CRÍTICA: ROTA '/sos' (Porta 4000) ---
+      await api.post('/sos', {
+        userName: user.name,
+        location: '-22.7348, -47.6476 (Piracicaba/SP)', // Simulado
+        bpm: '82',
+        battery: '85',
+        connection: '4G LTE'
+      });
+
+      // Sucesso
+      setStatus('ALERTA ENVIADO!');
+      Alert.alert(
+        'SOCORRO SOLICITADO', 
+        'A Central de Monitoramento confirmou o recebimento do seu alerta.',
+        [{ text: 'Entendido', onPress: () => navigation.goBack() }]
+      );
+
+    } catch (error) {
+      console.log('❌ ERRO AO ENVIAR SOS:', error);
+      setStatus('ERRO NO ENVIO');
+      Alert.alert(
+        'FALHA DE CONEXÃO', 
+        'Não foi possível contatar a central automaticamente. Ligue para 192.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
 
   return (
-    <View style={[styles.container, { justifyContent: 'center' }]}>
-      <StatusBar barStyle="light-content" />
-      
-      <View style={{ position: 'absolute', top: 60, left: 30, right: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <View>
-           <Image source={require('../../assets/LogoApp.png')} style={{ width: 40, height: 40, marginBottom: 5 }} />
-           <Text style={{ color: '#FFF', fontSize: 26, fontWeight: 'bold' }}>{user.name}</Text>
-           <Text style={{ color: COLORS.gray, fontSize: 13, letterSpacing: 1 }}>SISTEMA ATIVO</Text>
+    <View style={globalStyles.container}>
+      {/* Status Bar Vermelha (Alerta) */}
+      <StatusBar backgroundColor="#dc2626" barStyle="light-content" />
+
+      {/* 1. CABEÇALHO (Sirene + Título) */}
+      <View style={styles.header}>
+        <View style={styles.headerIconArea}>
+           <Siren size={32} color="#dc2626" />
         </View>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.logoutBtn}>
-           <Text style={{ color: COLORS.danger, fontWeight: 'bold', fontSize: 15 }}>SAIR</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>MODO DE EMERGÊNCIA</Text>
+        <Text style={styles.subtitle}>O sistema está monitorando você</Text>
       </View>
 
-      <View style={{ alignItems: 'center' }}>
-        <Text style={{ color: COLORS.danger, fontSize: 38, fontWeight: '900', letterSpacing: 2 }}>EMERGÊNCIA</Text>
-        <Text style={{ color: COLORS.gray, fontSize: 16, marginBottom: 40, fontWeight: 'bold' }}>TOQUE PARA ACIONAR</Text>
+      {/* 2. TELEMETRIA (Dados Vitais) */}
+      <View style={styles.telemetryContainer}>
         
-        <TouchableOpacity style={styles.panicButtonV2} activeOpacity={0.8}>
-          <View style={styles.innerRing}>
-            <ShieldAlert color="#FFF" size={100} />
+        {/* Bloco Cardíaco */}
+        <View style={styles.telemetryBox}>
+            <Text style={styles.telemetryLabel}>BATIMENTOS</Text>
+            <View style={styles.telemetryValueRow}>
+                <Heart size={24} color="#dc2626" fill="#dc2626" />
+                <Text style={styles.telemetryNumber}>82</Text>
+                <Text style={styles.telemetryUnit}>BPM</Text>
+            </View>
+        </View>
+
+        {/* Bloco Conexão */}
+        <View style={[styles.telemetryBox, { borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }]}>
+            <Text style={styles.telemetryLabel}>CONEXÃO</Text>
+            <View style={styles.telemetryValueRow}>
+                <Signal size={24} color="#16a34a" />
+                <Text style={[styles.telemetryNumber, { color: '#16a34a' }]}>4G</Text>
+                <Text style={styles.telemetryUnit}>LTE</Text>
+            </View>
+        </View>
+
+      </View>
+
+      {/* 3. BOTÃO GIGANTE (Ação Principal) */}
+      <View style={styles.centerArea}>
+        <TouchableOpacity 
+          style={styles.sosBigButton} 
+          onPress={handleSOSAction}
+          activeOpacity={0.8}
+        >
+          <View style={styles.sosInnerCircle}>
+            <Text style={styles.sosText}>SOS</Text>
+            <Text style={styles.pushText}>PRESSIONE</Text>
           </View>
+        </TouchableOpacity>
+        {/* Feedback visual do status abaixo do botão */}
+        <Text style={styles.statusText}>{status}</Text>
+      </View>
+
+      {/* 4. DADOS DE LOGÍSTICA (Local + Contato) */}
+      <View style={styles.infoContainer}>
+        <View style={styles.infoRow}>
+          <MapPin size={20} color="#6b7280" />
+          <Text style={styles.infoText}>Av. Paulista, 1578 - SP</Text>
+        </View>
+        <View style={[styles.infoRow, { marginTop: 10 }]}>
+          <Phone size={20} color="#6b7280" />
+          <Text style={styles.infoText}>Notificando: Dr. Silva e João</Text>
+        </View>
+      </View>
+
+      {/* 5. RODAPÉ (Cancelar) */}
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+          <XCircle size={24} color="#dc2626" style={{ marginRight: 10 }} />
+          <Text style={styles.cancelText}>CANCELAR OPERAÇÃO</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.monitorFooter}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
-            <Text style={{ color: COLORS.gray, fontSize: 11, fontWeight: 'bold' }}>BATIMENTOS</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
-              <Heart color={COLORS.danger} fill={COLORS.danger} size={30} />
-              <Text style={{ color: '#FFF', fontSize: 40, fontWeight: 'bold', marginLeft: 12 }}>82</Text>
-              <Text style={{ color: COLORS.danger, fontWeight: 'bold', fontSize: 14 }}> BPM</Text>
-            </View>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ color: COLORS.gray, fontSize: 11, fontWeight: 'bold' }}>CONEXÃO</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#22c55e', padding: 12, borderRadius: 15, marginTop: 5 }}>
-              <Activity color="#22c55e" size={22} />
-              <Text style={{ color: '#22c55e', fontWeight: 'bold', marginLeft: 8 }}>4G LTE</Text>
-            </View>
-          </View>
-        </View>
-      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    alignItems: 'center',
+    marginTop: 50, // Safe Area
+    marginBottom: 20,
+  },
+  headerIconArea: {
+    padding: 10,
+    backgroundColor: '#fef2f2',
+    borderRadius: 50,
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#dc2626',
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  
+  // --- ÁREA DE TELEMETRIA ---
+  telemetryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 30,
+    marginHorizontal: 40,
+    backgroundColor: '#f9fafb', // Fundo cinza bem claro
+    borderRadius: 16,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  telemetryBox: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  telemetryLabel: {
+    fontSize: 10,
+    color: '#6b7280',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  telemetryValueRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  telemetryNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+    marginLeft: 6,
+    lineHeight: 28,
+  },
+  telemetryUnit: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: 'bold',
+    marginLeft: 4,
+    marginBottom: 4,
+  },
+  // -------------------------
+
+  centerArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 30,
+  },
+  sosBigButton: {
+    width: 180, 
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: '#fca5a5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#dc2626',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+  },
+  sosInnerCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#dc2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  sosText: {
+    fontSize: 42,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  pushText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginTop: 0,
+  },
+  statusText: {
+    marginTop: 15,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#dc2626',
+    letterSpacing: 1,
+  },
+  infoContainer: {
+    paddingHorizontal: 50,
+    alignItems: 'center',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 10,
+    fontWeight: '500',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 40,
+    width: '100%',
+    alignItems: 'center',
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#dc2626',
+    backgroundColor: '#FFFFFF',
+    elevation: 2,
+  },
+  cancelText: {
+    color: '#dc2626',
+    fontWeight: 'bold',
+    fontSize: 14,
+  }
+});

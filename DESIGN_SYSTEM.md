@@ -1,35 +1,70 @@
-# SAÚDE CICLO DA VIDA - DESIGN SYSTEM (PGT-01)
-> Data de Congelamento: 19/01/2026
+# SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+> Documento Mestre de Governança e Design (PGT-01)
+> Última Atualização: 19/01/2026
 
-## 1. Regras Globais de Cores
-- **Fundo (Background):** #FFFFFF (Branco Puro) - OBRIGATÓRIO EM TODAS AS TELAS.
-- **Texto Principal:** #000000 (Preto).
-- **Inputs (Campos):**
-  - Cor de Fundo: #f3f4f6 (Cinza muito claro).
-  - Borda: #333333 (1px sólida).
-  - Texto Interno: Centralizado e Preto.
-- **Botão Principal (Ação):**
-  - Estilo: Cinza (#d1d5db) com borda escura.
-  - Texto: "ENTER" (Caixa alta, negrito, preto).
+---
 
-## 2. Identidade Visual (Logos)
-- **Tela de Login:**
-  - Imagem: `LogoApp.png` (Logo + Texto embutido).
-  - Tamanho: Grande (aprox. 170x250).
-  - Posição: Topo Centralizado.
-  - *Proibido:* Escrever o nome do app em texto abaixo deste logo.
-- **Telas Internas (Home/Dashboard):**
-  - Imagem: `LogoAppGeral.png` (Apenas o símbolo da gota).
-  - Tamanho: Pequeno (aprox. 100x100).
-  - Texto: "Saúde Ciclo da Vida" escrito em preto abaixo do logo.
+## 0. PROTOCOLO DE GOVERNANÇA (REGRA DE OURO)
+**O Desenvolvedor (IA) deve atuar como um Mentor Sênior Full Stack e seguir rigorosamente:**
 
-## 3. Componentes Críticos
-- **Botão SOS (Pânico):**
-  - **Formato:** Redondo (Circular).
-  - **Posição:** Flutuante no Canto Inferior Direito (Bottom-Right).
-  - **Cor Ativo:** Vermelho (#dc2626).
-  - **Cor Inativo:** Cinza (#9ca3af).
-  - **Regra de Negócio:** Só ativa após o primeiro login bem-sucedido (AsyncStorage).
+1.  **Precisão Cirúrgica:** Tudo deve ser feito passo a passo, tópico por tópico.
+2.  **Detalhamento Extremo:**
+    * Local de execução do comando deve ser explicitamente discriminado.
+    * Linhas de comando devem ser expressamente discriminadas.
+3.  **Integridade de Arquivos:**
+    * **NÃO REMENDAR ARQUIVOS.** Sempre fornecer o código completo para substituição.
+    * Validação de arquivo com comparação (contexto antes/depois se necessário).
+4.  **Didática:** Pensar sempre em alguém começando do ZERO absoluto.
+5.  **Lógica:** Clareza lógica, ordem cronológica e conteúdo tecnológico atualizado.
 
-## 4. Navegação
-- Botão "SAIR" deve estar sempre presente na Home (Canto Superior Esquerdo ou Header).
+---
+
+## 1. DESIGN SYSTEM & UI (Visual)
+
+### A. Regras Globais
+* **Fundo (Background):** `#FFFFFF` (Branco Puro) - **OBRIGATÓRIO** em todas as telas.
+* **Margens de Segurança (Safe Area):**
+    * **Topo:** `paddingTop: 50` a `60` (Android/iOS) para não colar na bateria.
+    * **Alinhamento Vertical:** Telas de Login/Formulário usam `justifyContent: 'flex-start'` (Topo) e não `center`.
+* **Fontes/Texto:**
+    * Cor Principal: `#000000` (Preto).
+    * Nomes Próprios: Exibir Nome Completo (proibido usar `.split` para cortar nomes).
+
+### B. Identidade Visual (Logos)
+1.  **Tela de Login (Boas-vindas):**
+    * **Arquivo:** `LogoApp.png` (Logo W170 x H250).
+    * **Comportamento:** Posicionado no **TOPO** da tela (com margem de respiro).
+    * **Regra:** Não escrever o nome do app em texto abaixo dele (o logo já contém o nome).
+2.  **Telas Internas (Home/Dashboard):**
+    * **Arquivo:** `LogoAppGeral.png` (Símbolo Gota W80 x H80).
+    * **Comportamento:** Centralizado no topo do scroll.
+    * **Regra:** Escrever "Saúde Ciclo da Vida" em texto preto abaixo do símbolo.
+
+### C. Componentes Críticos
+
+#### 1. Botão SOS (Pânico)
+* **Arquivo:** `PanicButtonSmall.tsx`
+* **Estilo:** Circular (60x60), Vermelho (`#dc2626`) com borda branca e sombra forte.
+* **Posição:** Flutuante no Canto Inferior Direito (`bottom: 50`, `right: 25`).
+* **Lógica:** Bloqueado (Cinza) antes do primeiro login; Ativo (Vermelho) após login.
+
+#### 2. Botão SAIR
+* **Arquivo:** `LogoutButton.tsx`
+* **Estilo:** Borda fina vermelha, fundo claro (`#fef2f2`), ícone `LogOut` vermelho.
+* **Uso:** Obrigatório no Header de telas logadas.
+
+#### 3. Ícones
+* **Biblioteca:** `lucide-react-native` (Proibido usar Emojis).
+* **Estilo:** Traço fino, cor preta, dentro de círculos cinzas suaves.
+
+---
+
+## 2. ARQUITETURA TÉCNICA
+
+### Mobile (Expo/React Native)
+* **Inputs:** Estilo "Caixa" com borda (`borderWidth: 1`), fundo cinza claro (`#f3f4f6`) e texto centralizado.
+* **Botão Enter:** Cinza médio (`#d1d5db`), texto "ENTER" em negrito preto.
+
+### Integração
+* **API:** Axios configurado com IP fixo da máquina local.
+* **Armazenamento:** `AsyncStorage` para persistência de estado (ex: Primeiro Acesso).

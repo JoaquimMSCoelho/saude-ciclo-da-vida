@@ -1,19 +1,30 @@
+// ARQUIVO: backend/src/app.module.ts
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
+// --- SEUS MÓDULOS ANTIGOS (Mantidos para o Login funcionar) ---
 import { UsersModule } from './users/users.module';
-// Se o erro mencionou auth.service, você provavelmente tem o AuthModule.
-// Se der erro de "Cannot find module './auth/auth.module'", 
-// remova a linha abaixo e o 'AuthModule' dos imports.
 import { AuthModule } from './auth/auth.module'; 
 import { AlertsModule } from './alerts/alerts.module';
+// --------------------------------------------------------------
+
+// --- O NOVO CONTROLLER (Para o Pânico funcionar) ---
+import { EmergencyController } from './emergency.controller'; 
+// ---------------------------------------------------
 
 @Module({
   imports: [
+    // Mantemos sua estrutura original
     UsersModule, 
-    AuthModule, AlertsModule 
+    AuthModule, 
+    AlertsModule 
   ],
-  controllers: [AppController],
+  controllers: [
+    AppController,
+    // ADICIONAMOS APENAS ISTO AQUI:
+    EmergencyController 
+  ],
   providers: [AppService],
 })
 export class AppModule {}
