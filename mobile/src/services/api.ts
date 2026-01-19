@@ -1,8 +1,13 @@
+// -------------------------------------------------------------------------
+// PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+// ARQUITETURA: INTEGRATION LAYER
+// -------------------------------------------------------------------------
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://192.168.15.8:3000', // Seu IP atualizado
-  timeout: 5000,
+  // ATUALIZADO EM 19/01/2026:
+  baseURL: 'http://192.168.15.11:3000', 
+  timeout: 10000,
 });
 
 export default api;
