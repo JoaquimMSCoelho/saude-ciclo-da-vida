@@ -1,9 +1,9 @@
 // -------------------------------------------------------------------------
 // COMPONENTE: BOTÃO DE PÂNICO FLUTUANTE (FAB)
-// POSIÇÃO: Canto Inferior Direito (Conforme Imagens img02 e img04)
+// VERSÃO FINAL: Estilo "SOS" + Posição Ajustada (Safe Area)
 // -------------------------------------------------------------------------
 import React from 'react';
-import { TouchableOpacity, StyleSheet, Alert, Text, View } from 'react-native';
+import { TouchableOpacity, StyleSheet, Alert, Text } from 'react-native';
 
 interface PanicButtonProps {
   onPress: () => void;
@@ -16,7 +16,7 @@ export default function PanicButtonSmall({ onPress, disabled = false }: PanicBut
     if (disabled) {
       Alert.alert(
         "Ainda não disponível", 
-        "O Botão SOS será ativado após o seu login."
+        "O Botão SOS será ativado automaticamente após o seu login."
       );
     } else {
       onPress();
@@ -36,16 +36,20 @@ export default function PanicButtonSmall({ onPress, disabled = false }: PanicBut
 
 const styles = StyleSheet.create({
   button: {
-    width: 60,   // Um pouco maior para ser tocável com facilidade
+    width: 60,   
     height: 60,
-    borderRadius: 30, // Redondo
+    borderRadius: 30, 
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
-    bottom: 30,  // FLUTUANDO NO RODAPÉ
-    right: 30,   // CANTO DIREITO
+    
+    // --- CORREÇÃO DE POSIÇÃO AQUI ---
+    bottom: 50,  // Mais alto para não colar na navegação
+    right: 25,   // Levemente afastado da borda
+    // --------------------------------
+    
     zIndex: 9999,
-    elevation: 8, // Sombra forte para destacar
+    elevation: 8, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

@@ -1,5 +1,6 @@
 // -------------------------------------------------------------------------
-// TELA: LOGIN (VERSÃO FINAL - LOGO COMPLETO)
+// TELA: LOGIN (VERSÃO FINAL - LOGO NO TOPO)
+// AJUSTE: LogoApp posicionado no topo com margem de segurança (Safe Area)
 // -------------------------------------------------------------------------
 import React, { useState, useEffect } from 'react';
 import { 
@@ -49,7 +50,7 @@ export default function LoginScreen({ navigation }: any) {
         style={styles.content}
       >
         
-        {/* 1. LOGO PRINCIPAL (Já contém o texto "Saúde Ciclo da Vida") */}
+        {/* 1. LOGO PRINCIPAL (Agora no topo) */}
         <View style={styles.logoContainer}>
           <Image 
             source={require('../../assets/LogoApp.png')} 
@@ -57,7 +58,7 @@ export default function LoginScreen({ navigation }: any) {
           />
         </View>
 
-        {/* 2. FORMULÁRIO (Inputs Centralizados) */}
+        {/* 2. FORMULÁRIO */}
         <View style={styles.formContainer}>
           <TextInput 
             style={globalStyles.input} 
@@ -105,23 +106,30 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    justifyContent: 'center',
+    // MUDANÇA CRÍTICA 1: Trocamos 'center' por 'flex-start' para jogar tudo pro topo
+    justifyContent: 'flex-start', 
     alignItems: 'center',
     paddingHorizontal: 30,
     width: '100%',
+    // MUDANÇA CRÍTICA 2: Adicionamos padding no topo para o "Respiro"
+    paddingTop: Platform.OS === 'android' ? 50 : 70, 
   },
   logoContainer: {
-    marginBottom: 40, // Espaço entre logo e campos
+    // Ajuste fino: Pequena margem do topo e espaço embaixo para os inputs
+    marginTop: 10, 
+    marginBottom: 40, 
     alignItems: 'center',
   },
   logo: {
-    width: 170,  // Largura exata do Figma
-    height: 250, // Altura exata do Figma
+    width: 170,  
+    height: 250, 
     resizeMode: 'contain',
   },
   formContainer: {
     width: '100%',
     alignItems: 'center',
+    // Opcional: Se quiser descer um pouco só o formulário, aumente aqui
+    marginTop: 10, 
   },
   linkText: {
     color: '#000',
