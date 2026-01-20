@@ -1,0 +1,101 @@
+# MANUAL TÉCNICO DE AUTENTICAÇÃO (BLUEPRINT)
+> **Projeto:** Saúde Ciclo da Vida (Enterprise Edition)
+> **Módulo:** Autenticação & Segurança (Mobile)
+> **Versão:** 1.0 (Consolidada)
+> **Status:** EM PRODUÇÃO
+
+---
+
+## 1. VISÃO GERAL
+Este documento descreve a arquitetura, fluxos e regras de negócio do módulo de autenticação. O sistema utiliza uma abordagem híbrida que suporta **Login Online** (via JWT) e **Funcionalidades Offline** (SOS de Emergência) através de persistência local segura.
+
+### 1.1. Tecnologias Envolvidas
+* **Frontend:** React Native (Expo) + TypeScript.
+* **Armazenamento Local:** `@react-native-async-storage/async-storage`.
+* **Comunicação:** Axios (REST API).
+* **Backend:** NestJS (Porta 4000).
+
+---
+
+## 2. MAPA DE FICHEIROS (ARQUITETURA)
+
+| Ficheiro | Função | Tipo |
+| :--- | :--- | :--- |
+| `src/screens/LoginScreen.tsx` | Porta de entrada. Gerencia Login e Lógica SOS. | View |
+| `src/screens/RegisterScreen.tsx` | Formulário de criação de conta. | View |
+| `src/screens/ForgotPasswordScreen.tsx` | Solicitação de reset de senha. | View |
+| `src/services/storage.ts` | **(CRÍTICO)** Gerencia a persistência do perfil para uso offline. | Service |
+| `src/services/api.ts` | Cliente HTTP configurado para a porta 4000. | Service |
+
+---
+
+## 3. REGRAS DE NEGÓCIO CRÍTICAS
+
+### 3.1. O "Botão de Pânico Inteligente" (Smart SOS)
+Diferente de apps comuns, o nosso botão SOS reside na tela de Login mas obedece a uma regra de segurança estrita para evitar trotes, mantendo a acessibilidade em emergências.
+
+* **Regra:** O botão só é habilitado se o dispositivo possuir um "Rastro de Autenticação" (Login prévio realizado com sucesso pelo menos uma vez).
+* **Implementação:**
+    1.  Ao abrir o App (`useEffect`), o sistema consulta o `StorageService`.
+    2.  Se existir perfil salvo: **Botão Vermelho (Ativo)**.
+    3.  Se não existir (Primeira vez): **Botão Cinza (Inativo)** + Alerta Educativo ao clicar.
+
+### 3.2. Persistência de Sessão
+* Ao realizar Login ou Cadastro com sucesso, os dados essenciais do utilizador (`name`, `email`, `photo`) são imediatamente gravados no disco do telemóvel.
+* **Objetivo:** Permitir que o SAMU/Emergência identifique o paciente mesmo que ele esteja sem internet (Offline) na hora do socorro.
+
+---
+
+## 4. FLUXOS DE NAVEGAÇÃO E DADOS
+
+### 4.1. Fluxo de Login (Caminho Feliz)
+1.  **Entrada:** Utilizador insere E-mail e Senha.
+2.  **Processamento:** `POST /auth/login` (Backend).
+3.  **Sucesso (200 OK):**
+    * Recebe `access_token` e objeto `user`.
+    * Invoca `StorageService.saveUser(user)`.
+    * Redireciona para `Home`.
+4.  **Falha (401/400):** Exibe alerta nativo (`Alert.alert`).
+
+### 4.2. Fluxo de Cadastro (Onboarding)
+1.  **Ação:** Clique em "Ainda não tem conta? Cadastre-se".
+2.  **Tela:** `RegisterScreen` (Campos: Nome, E-mail, Senha).
+3.  **Processamento:** `POST /auth/register` (Backend).
+4.  **Sucesso:**
+    * Exibe mensagem de boas-vindas.
+    * Redireciona para Login para forçar a memorização da senha.
+
+### 4.3. Fluxo de Recuperação (Esqueci Senha)
+1.  **Ação:** Clique em "Esqueci minha senha".
+2.  **Tela:** `ForgotPasswordScreen`.
+3.  **Processamento:** Simulação de envio de e-mail (Backend pendente de integração SMTP).
+4.  **Feedback:** Alerta visual confirmando a solicitação.
+
+---
+
+## 5. ESPECIFICAÇÃO DE UI (DESIGN SYSTEM)
+
+### 5.1. Identidade Visual
+* **Tela de Login:** Deve usar obrigatoriamente o logo vertical (`LogoApp.png`) para impacto de marca.
+* **Telas Internas:** Devem usar o logo símbolo (`LogoAppGeral.png`) para economizar espaço e manter foco no formulário.
+
+### 5.2. Safe Areas (Áreas de Segurança)
+Para garantir compatibilidade com "Notches" (recortes de ecrã) e Ilhas Dinâmicas:
+* **Padding Superior:** `Platform.OS === 'android' ? 60 : 70`.
+* **Fundo:** `#FFFFFF` (Branco Puro).
+
+---
+
+## 6. SNIPPETS DE CÓDIGO (REFERÊNCIA RÁPIDA)
+
+### A. Serviço de Armazenamento (O Coração Offline)
+```typescript
+export const StorageService = {
+  async saveUser(user: UserProfile) {
+    await AsyncStorage.setItem('@SCV_USER_PROFILE', JSON.stringify(user));
+  },
+  async getUser() {
+    const json = await AsyncStorage.getItem('@SCV_USER_PROFILE');
+    return json ? JSON.parse(json) : null;
+  }
+};

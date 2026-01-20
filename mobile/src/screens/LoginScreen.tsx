@@ -1,43 +1,55 @@
 // -------------------------------------------------------------------------
-// TELA: LOGIN (VERSÃO FINAL - LOGO NO TOPO)
-// AJUSTE: LogoApp posicionado no topo com margem de segurança (Safe Area)
+// PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+// MÓDULO: TELA DE LOGIN
+// VERSÃO: FINAL STABLE (Com Links de Navegação Ativos)
 // -------------------------------------------------------------------------
+
 import React, { useState, useEffect } from 'react';
 import { 
   View, TextInput, TouchableOpacity, Image, StatusBar, 
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, Text 
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { StorageService, UserProfile } from '../services/storage';
 import PanicButtonSmall from '../components/PanicButtonSmall';
 import api from '../services/api';
-import { styles as globalStyles, COLORS } from '../styles/global';
+import { styles as globalStyles } from '../styles/global';
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('joao.pai@email.com');
   const [password, setPassword] = useState('123456');
   const [loading, setLoading] = useState(false);
-  const [hasAccess, setHasAccess] = useState(false);
+  const [localUser, setLocalUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
+    const checkHistory = async () => {
+      const user = await StorageService.getUser();
+      if (user) setLocalUser(user);
+    };
     checkHistory();
   }, []);
-
-  const checkHistory = async () => {
-    const registered = await AsyncStorage.getItem('@SCV:hasLogged');
-    if (registered === 'true') setHasAccess(true);
-  };
 
   const handleLogin = async () => {
     setLoading(true);
     try {
       const response = await api.post('/auth/login', { email, password });
-      await AsyncStorage.setItem('@SCV:hasLogged', 'true');
       const { user, access_token } = response.data;
       navigation.replace('Home', { user, token: access_token });
     } catch (error) {
-      Alert.alert('Erro de Acesso', 'Verifique suas credenciais.');
+      Alert.alert('Erro de Acesso', 'Verifique suas credenciais ou conexão.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSOSAction = () => {
+    if (localUser) {
+      navigation.navigate('Panic', { user: localUser });
+    } else {
+      Alert.alert(
+        'Função Indisponível', 
+        'Para sua segurança, o botão SOS só é ativado após o primeiro login neste aparelho.'
+      );
     }
   };
 
@@ -49,16 +61,10 @@ export default function LoginScreen({ navigation }: any) {
         behavior={Platform.OS === "ios" ? "padding" : "height"} 
         style={styles.content}
       >
-        
-        {/* 1. LOGO PRINCIPAL (Agora no topo) */}
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../assets/LogoApp.png')} 
-            style={styles.logo} // W:170, H:250
-          />
+          <Image source={require('../../assets/LogoApp.png')} style={styles.logo} />
         </View>
 
-        {/* 2. FORMULÁRIO */}
         <View style={styles.formContainer}>
           <TextInput 
             style={globalStyles.input} 
@@ -67,6 +73,7 @@ export default function LoginScreen({ navigation }: any) {
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
+            keyboardType="email-address"
           />
           
           <TextInput 
@@ -79,26 +86,28 @@ export default function LoginScreen({ navigation }: any) {
           />
           
           <TouchableOpacity style={globalStyles.loginButton} onPress={handleLogin} disabled={loading}>
-            {loading ? <ActivityIndicator color="#000" /> : <Text style={globalStyles.loginButtonText}>ENTER</Text>}
+            {loading ? <ActivityIndicator color="#000" /> : <Text style={globalStyles.loginButtonText}>ENTRAR</Text>}
           </TouchableOpacity>
 
-          <TouchableOpacity style={{ marginTop: 20 }}>
+          {/* --- LINKS DE NAVEGAÇÃO ATIVOS --- */}
+          <TouchableOpacity 
+            style={{ marginTop: 20 }} 
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
             <Text style={styles.linkText}>Esqueci minha senha</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={{ marginTop: 30 }}>
-            <Text style={styles.linkText}>Ainda não tem conta? Cadastre-se</Text>
+          <TouchableOpacity 
+            style={{ marginTop: 30 }}
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.linkText}>Ainda não tem conta? <Text style={{fontWeight: 'bold', color: '#0891b2'}}>Cadastre-se</Text></Text>
           </TouchableOpacity>
+          {/* ---------------------------------- */}
         </View>
-
       </KeyboardAvoidingView>
 
-      {/* 3. BOTÃO SOS (Flutuante Canto Inferior Direito) */}
-      <PanicButtonSmall 
-        onPress={() => navigation.navigate('Panic', { user: { id: 'anon', name: 'Anonimo' } })} 
-        disabled={!hasAccess} 
-      />
-
+      <PanicButtonSmall onPress={handleSOSAction} disabled={!localUser} />
     </View>
   );
 }
@@ -106,16 +115,13 @@ export default function LoginScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    // MUDANÇA CRÍTICA 1: Trocamos 'center' por 'flex-start' para jogar tudo pro topo
     justifyContent: 'flex-start', 
     alignItems: 'center',
     paddingHorizontal: 30,
     width: '100%',
-    // MUDANÇA CRÍTICA 2: Adicionamos padding no topo para o "Respiro"
     paddingTop: Platform.OS === 'android' ? 50 : 70, 
   },
   logoContainer: {
-    // Ajuste fino: Pequena margem do topo e espaço embaixo para os inputs
     marginTop: 10, 
     marginBottom: 40, 
     alignItems: 'center',
@@ -128,7 +134,6 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
     alignItems: 'center',
-    // Opcional: Se quiser descer um pouco só o formulário, aumente aqui
     marginTop: 10, 
   },
   linkText: {

@@ -1,5 +1,5 @@
 # 📁 ESTRUTURA DO PROJETO: SaudeCicloDaVida
-> Status: VALIDADO EM 19/01/2026 (Backend Porta 4000 / Rota SOS)
+> Status: VALIDADO EM 20/01/2026 (Ciclo Autenticação Completo)
 
 ```text
     📄 docker-compose.yml
@@ -7,61 +7,42 @@
     📄 DESIGN_SYSTEM.md
     📄 PADROES.md
     📄 README.md
+    📂 docs/
+        📄 MANUAL_AUTENTICACAO.md  <-- (NOVO: Blueprint da Segurança)
     📂 backend/
         📄 .env
-        📄 .gitignore
-        📄 .prettierrc
-        📄 eslint.config.mjs
-        📄 nest-cli.json
-        📄 package-lock.json
-        📄 package.json
-        📄 README.md
-        📄 tsconfig.build.json
-        📄 tsconfig.json
-        📂 prisma/
-            📄 schema.prisma
-            📄 seed.ts
-            📂 migrations/
+        ...
         📂 src/
-            📄 app.controller.ts
             📄 app.module.ts
-            📄 app.service.ts
-            📄 emergency.controller.ts  <-- (NOVO: ROTA /sos)
-            📄 main.ts                  <-- (MODIFICADO: PORTA 4000)
+            📄 main.ts (Porta 4000)
             📄 prisma.service.ts
-            📂 alerts/
-                📄 alerts.module.ts
             📂 auth/
+                📄 auth.controller.ts (Login + Register)
                 📄 auth.module.ts
-                📄 auth.service.ts
+                📄 auth.service.ts    (Lógica Bcrypt + JWT)
+                📂 dto/
+                    📄 register.dto.ts <-- (NOVO: Validação)
             📂 users/
                 📄 users.module.ts
+                📄 users.service.ts   (Create + Find + Medications)
     📂 mobile/
-        📄 app.json
-        📄 App.tsx
-        📄 index.ts
-        📄 package.json
-        📄 tsconfig.json
+        📄 App.tsx (Rotas: Auth + App + Panic)
+        ...
         📂 src/
             📂 components/
                 📄 PanicButtonSmall.tsx
                 📄 LogoutButton.tsx
             📂 screens/
-                📄 HomeScreen.tsx
-                📄 LoginScreen.tsx
-                📄 PanicScreen.tsx      <-- (ROTA ATUALIZADA)
+                📄 LoginScreen.tsx        (Com SOS Inteligente)
+                📄 RegisterScreen.tsx     <-- (NOVO)
+                📄 ForgotPasswordScreen.tsx <-- (NOVO)
+                📄 HomeScreen.tsx         (Persistência de Dados)
+                📄 MedicationScreen.tsx
+                📄 PanicScreen.tsx
             📂 services/
-                📄 api.ts               <-- (PORTA 4000)
+                📄 api.ts (Porta 4000)
+                📄 storage.ts             <-- (NOVO: Persistência Offline)
             📂 styles/
                 📄 global.ts
     📂 web-admin/
-        📄 next.config.ts
-        📄 package.json
-        📄 postcss.config.mjs
-        📄 tailwind.config.ts
-        📄 tsconfig.json
-        📂 src/
-            📂 app/
-                📄 layout.tsx
-                📄 page.tsx             <-- (DASHBOARD ATIVO)
-                📄 globals.css
+        ... (Estrutura Next.js padrão)

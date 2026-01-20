@@ -1,15 +1,10 @@
 // -------------------------------------------------------------------------
-// TELA: HOME / DASHBOARD
-// VERSÃO: FINAL ENTERPRISE (PGT-01)
-// CHECKLIST:
-// [x] Nome Completo (Sem split)
-// [x] Botão Sair Padronizado (Componente Externo)
-// [x] Margens de Segurança (Topo e Rodapé)
-// [x] Ícones Técnicos (Lucide)
-// [x] Logo Geral (Gota) + Texto "Saúde Ciclo da Vida"
+// PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+// MÓDULO: TELA PRINCIPAL (HOME)
+// VERSÃO: FINAL STABLE (Visual Grid + Lógica SOS Offline)
 // -------------------------------------------------------------------------
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StatusBar, ScrollView, Alert, StyleSheet, Platform } from 'react-native';
 // Ícones Técnicos
 import { Pill, Apple, CalendarDays, Activity } from 'lucide-react-native';
@@ -19,12 +14,32 @@ import PanicButtonSmall from '../components/PanicButtonSmall';
 import LogoutButton from '../components/LogoutButton'; 
 import { styles as globalStyles } from '../styles/global';
 
+// Lógica de Persistência (A Mágica do SOS Offline)
+import { StorageService } from '../services/storage';
+
 export default function HomeScreen({ route, navigation }: any) {
   // Recebe dados do Login (ou define padrão Visitante)
   const { user, token } = route.params || { user: { name: 'Visitante' } };
   
   // LÓGICA 1: Nome Completo (Prioridade para o nome vindo do banco)
   const fullName = user.name || 'Usuário'; 
+
+  // LÓGICA 2: PERSISTÊNCIA AUTOMÁTICA (Novo)
+  // Assim que a tela carrega, salvamos o usuário no disco.
+  // Isso permite que o Botão SOS funcione na tela de login depois.
+  useEffect(() => {
+    const persistUser = async () => {
+      if (user && user.name !== 'Visitante') {
+        console.log('💾 Salvando perfil para SOS Offline...');
+        await StorageService.saveUser({
+          name: user.name,
+          email: user.email || 'user@email.com',
+          // Se tiver foto, salvaria aqui também
+        });
+      }
+    };
+    persistUser();
+  }, [user]);
 
   // Função de Logout com confirmação
   const handleLogout = () => {
@@ -122,7 +137,7 @@ export default function HomeScreen({ route, navigation }: any) {
   );
 }
 
-// --- FOLHA DE ESTILOS DA HOME ---
+// --- FOLHA DE ESTILOS DA HOME (Preservada do seu arquivo original) ---
 const styles = StyleSheet.create({
   headerTop: {
     flexDirection: 'row',

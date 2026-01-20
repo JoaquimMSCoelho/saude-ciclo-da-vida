@@ -5,20 +5,55 @@
  * GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
  * -------------------------------------------------------------------------
  * MÓDULO: USERS SERVICE
- * DESCRIÇÃO: Centraliza busca de identidade e prontuário farmacêutico.
+ * DESCRIÇÃO: Centraliza busca de identidade, cadastro e prontuário farmacêutico.
  * -------------------------------------------------------------------------
  */
 
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { RegisterDto } from '../auth/dto/register.dto'; // Importação do DTO
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * PGT-01: Criação de Identidade (Cadastro).
+   * Verifica duplicidade e gera perfil inicial.
+   */
+  async create(data: RegisterDto) {
+    try {
+      // 1. Verifica duplicidade
+      const userExists = await this.prisma.user.findUnique({
+        where: { email: data.email },
+      });
+
+      if (userExists) {
+        throw new ConflictException('Este e-mail já está em uso no sistema.');
+      }
+
+      // 2. Cria o usuário com Avatar automático
+      return await this.prisma.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password: data.password, // TODO: Implementar Bcrypt no futuro
+          photoUrl: `https://ui-avatars.com/api/?background=0891b2&color=fff&name=${data.name}`,
+        },
+      });
+
+    } catch (error) {
+      if (error instanceof ConflictException) throw error;
+      
+      console.error(`[ERRO CRÍTICO] Falha ao criar usuário: ${error.message}`);
+      throw new InternalServerErrorException('Falha ao registrar novo usuário.');
+    }
+  }
+
+  /**
    * PGT-01: Segurança e Identidade.
    * Utilizado pelo AuthService para localização de hash de senha.
+   * IMPORTANTE: Mantivemos o nome 'findByEmail' do seu padrão original.
    */
   async findByEmail(email: string) {
     try {
