@@ -1,0 +1,181 @@
+ESPECIFICAÇÃO TÉCNICA — GERAÇÃO DO ARQUIVO DE REFERÊNCIA DA TELA DE AUTENTICAÇÃO
+1. Objetivo da Entrega
+Gerar um arquivo técnico consolidado, contendo todo o código-fonte, procedimentos, fluxos, regras de negócio e componentes funcionais utilizados na implementação completa da tela de autenticação do sistema.
+Esse arquivo servirá como base arquitetural, modelo de referência e template reutilizável para futuros projetos.
+
+2. Escopo do Arquivo Técnico Consolidado
+O arquivo deve documentar, de forma detalhada e modular, todos os elementos envolvidos na construção da camada de autenticação, incluindo:
+
+2.1. Estrutura da Tela de Login
+Layout da interface
+
+Campos obrigatórios
+
+Validações de entrada
+
+Comportamento dos botões
+
+Regras de navegação
+
+2.2. Funcionalidades Implementadas
+O arquivo deve conter o código e a descrição técnica das seguintes funções:
+
+Login
+
+Entrada de e-mail
+
+Entrada de senha
+
+Validação de credenciais
+
+Tratamento de erros
+
+Redirecionamento pós-autenticação
+
+Criação de Conta (Cadastro)
+
+Formulário de novo usuário
+
+Validação de e-mail
+
+Validação de senha
+
+Persistência dos dados
+
+Confirmação de cadastro
+
+Função “Esqueci minha senha”
+
+Entrada de e-mail
+
+Validação de existência do usuário
+
+Envio de token ou link de recuperação
+
+Mensagens de feedback
+
+Função “Ainda não tem conta? Cadastre-se”
+
+Redirecionamento para tela de cadastro
+
+Regras de pré-cadastro
+
+Tratamento de duplicidade
+
+Recuperação de Senha
+
+Validação do token
+
+Criação de nova senha
+
+Regras de segurança
+
+Confirmação de redefinição
+
+3. Conteúdo Obrigatório do Arquivo
+O arquivo consolidado deve conter:
+
+3.1. Código-Fonte Completo
+Componentes de UI
+
+Funções de validação
+
+Funções de autenticação
+
+Serviços de backend (se aplicável)
+
+Rotas e endpoints
+
+Modelos de dados
+
+Tratamento de exceções
+
+3.2. Procedimentos Técnicos
+Fluxo de autenticação
+
+Fluxo de cadastro
+
+Fluxo de recuperação de senha
+
+Fluxo de redefinição de senha
+
+Fluxo de navegação entre telas
+
+3.3. Regras de Negócio
+Requisitos mínimos de senha
+
+Regras de validação de e-mail
+
+Regras de persistência
+
+Regras de segurança
+
+Regras de bloqueio e desbloqueio
+
+3.4. Estrutura de Diretórios
+Onde cada arquivo deve ficar
+
+Nomeação padrão
+
+Organização modular
+
+3.5. Dependências
+Bibliotecas utilizadas
+
+Versões recomendadas
+
+Configurações necessárias
+
+4. Formato do Arquivo Final
+O arquivo deve ser gerado em formato:
+
+Markdown (.md) ou
+
+Texto estruturado (.txt)
+
+E deve seguir a seguinte estrutura:
+
+Código
+/Autenticacao/
+    ├── 01_Introducao.md
+    ├── 02_Estrutura_da_Tela.md
+    ├── 03_Fluxo_Login.md
+    ├── 04_Fluxo_Cadastro.md
+    ├── 05_Fluxo_Esqueci_Senha.md
+    ├── 06_Fluxo_Recuperacao_Senha.md
+    ├── 07_Regras_de_Negocio.md
+    ├── 08_Codigo_Fonte_Completo.md
+    ├── 09_Endpoints_Backend.md
+    ├── 10_Checklist_Implementacao.md
+5. Finalidade do Arquivo
+O arquivo consolidado servirá como:
+
+Blueprint técnico para novos projetos
+
+Guia de implementação para desenvolvedores
+
+Base de versionamento para evolução da autenticação
+
+Modelo padrão para sistemas futuros
+
+Documentação oficial da camada de autenticação
+
+6. Resultado Esperado
+Ao final, teremos um documento técnico completo, contendo:
+
+Todo o código
+
+Todas as regras
+
+Todos os fluxos
+
+Todas as validações
+
+Toda a lógica de autenticação
+
+Esse documento será reutilizável, padronizado e servirá como referência oficial para qualquer projeto que precise de uma camada de autenticação robusta.
+
+# --- CONTEÚDO TEMPLATE ABAIXO ---
+# Especificação Técnica — Login
+Documento técnico gerado automaticamente pelo GestorArquivos.
+Este arquivo descreve tecnicamente o fluxo, regras e validações da tela de login.

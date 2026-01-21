@@ -3,5 +3,5 @@ Data de geração: 2026-01-21 10:04:37
 Projeto: SaudeCicloDaVida
 ---
 
-# Modelagem de Dados
-Entidades, relacionamentos e diagramas de dados.
+# Script de Geração de Memorial
+Descrição do processo de geração de memorial técnico.

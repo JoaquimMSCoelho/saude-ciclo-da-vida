@@ -1,0 +1,50 @@
+2026-01-21 10:04:36 | INFO | Sistema de logs inicializado.
+2026-01-21 10:04:36 | INFO | Arquivo de log: E:\Projetos\SaudeCicloDaVida\logs\atualizacao_projetos.log
+2026-01-21 10:04:36 | INFO | Projeto alvo: E:\Projetos\SaudeCicloDaVida
+2026-01-21 10:04:36 | INFO | Arquivos estruturais localizados:
+2026-01-21 10:04:36 | INFO |   - DESIGN_SYSTEM: E:\Projetos\SaudeCicloDaVida\DESIGN_SYSTEM.md
+2026-01-21 10:04:36 | INFO |   - ESTRUTURA_PROJETO: E:\Projetos\SaudeCicloDaVida\ESTRUTURA_PROJETO.md
+2026-01-21 10:04:36 | INFO |   - gerar_memorial: NÃO ENCONTRADO
+2026-01-21 10:04:36 | INFO |   - MemorialProjeto: E:\Projetos\SaudeCicloDaVida\MemorialProjeto.md
+2026-01-21 10:04:36 | INFO |   - MODELO_GOVERNANCA: E:\Projetos\SaudeCicloDaVida\MODELO_GOVERNANCA.md
+2026-01-21 10:04:36 | INFO |   - PADROES: E:\Projetos\SaudeCicloDaVida\PADROES.md
+2026-01-21 10:04:36 | INFO |   - MANUAL_AUTENTICACAO: E:\Projetos\SaudeCicloDaVida\docs\MANUAL_AUTENTICACAO.md
+2026-01-21 10:04:36 | INFO |   - MANUAL_AUTENTICACAO: E:\Projetos\SaudeCicloDaVida\docs\MANUAL_AUTENTICACAO.md
+2026-01-21 10:04:36 | INFO |   - MODELAGEM_DADOS: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md
+2026-01-21 10:04:36 | INFO |   - MODELAGEM_DADOS: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md
+2026-01-21 10:04:36 | INFO |   - EspecificaçãoTécnicaLogin: E:\Projetos\SaudeCicloDaVida\EspecificaçãoTécnicaLogin.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\DESIGN_SYSTEM.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\ESTRUTURA_PROJETO.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\MemorialProjeto.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\MODELO_GOVERNANCA.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\PADROES.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\docs\MANUAL_AUTENTICACAO.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\docs\MANUAL_AUTENTICACAO.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md
+2026-01-21 10:04:37 | INFO | ALTERAÇÃO DETECTADA: E:\Projetos\SaudeCicloDaVida\EspecificaçãoTécnicaLogin.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\DESIGN_SYSTEM.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\DESIGN_SYSTEM.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\ESTRUTURA_PROJETO.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\ESTRUTURA_PROJETO.md
+2026-01-21 10:04:37 | INFO | [NOVO] Criando arquivo estrutural: E:\Projetos\SaudeCicloDaVida\gerar_memorial.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\MemorialProjeto.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\MemorialProjeto.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\MODELO_GOVERNANCA.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\MODELO_GOVERNANCA.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\PADROES.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\PADROES.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\docs\MANUAL_AUTENTICACAO.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\docs\MANUAL_AUTENTICACAO.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\docs\MANUAL_AUTENTICACAO.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\docs\MANUAL_AUTENTICACAO.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md
+2026-01-21 10:04:37 | INFO | [MERGE SEGURO] Sobrescrevendo arquivo: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md
+2026-01-21 10:04:37 | INFO | Backup gerado: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md.bak_20260121_100437
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\docs\MODELAGEM_DADOS.md
+2026-01-21 10:04:37 | INFO | [EXISTENTE] Analisando arquivo: E:\Projetos\SaudeCicloDaVida\EspecificaçãoTécnicaLogin.md
+2026-01-21 10:04:37 | INFO | [MERGE NÃO SEGURO] Gerando arquivo .merged para revisão: E:\Projetos\SaudeCicloDaVida\EspecificaçãoTécnicaLogin.md
+2026-01-21 10:04:37 | INFO | Relatório HTML de diffs gerado em: E:\Projetos\SaudeCicloDaVida\relatorios\relatorio_diffs_20260121_100437.html
+2026-01-21 10:04:37 | INFO | Relatório disponível para consulta: E:\Projetos\SaudeCicloDaVida\relatorios\relatorio_diffs_20260121_100437.html
+2026-01-21 10:04:37 | INFO | Dashboard de relatórios gerado em: E:\Projetos\SaudeCicloDaVida\relatorios\index.html
