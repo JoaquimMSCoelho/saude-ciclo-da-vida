@@ -1,19 +1,21 @@
 /*
 -------------------------------------------------------------------------
 MÓDULO: AUTH CONTROLLER (A PORTARIA)
-DESCRIÇÃO: Recebe os pedidos de login e cadastro vindos do App.
+DESCRIÇÃO: Recebe os pedidos de login, cadastro e gestão de senhas.
 ROTAS: 
-  - POST /auth/login    (Entrada)
-  - POST /auth/register (Novos Moradores)
+  - POST /auth/login            (Entrada)
+  - POST /auth/register         (Novos Moradores)
+  - POST /auth/forgot-password  (Solicitar Link de Recuperação)
+  - POST /auth/reset-password   (Definir Nova Senha)
 -------------------------------------------------------------------------
 */
-import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto'; // Importação essencial para validar os dados
+import { RegisterDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
-  // Nota: Não precisamos injetar UsersService aqui, pois o AuthService já cuida disso.
+  // O AuthService é o nosso Gerente de Segurança
   constructor(private authService: AuthService) {}
 
   // ===========================================================================
@@ -41,5 +43,33 @@ export class AuthController {
     // 1. Recebe Nome, Email e Senha do App
     // 2. Repassa para o AuthService criar a conta e gerar o token inicial
     return this.authService.register(registerDto);
+  }
+
+  // ===========================================================================
+  // ROTA 3: FORGOT PASSWORD (Solicitar Recuperação)
+  // ===========================================================================
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { email: string }) {
+    // 1. Validação básica: O e-mail veio?
+    if (!body.email) {
+      throw new BadRequestException('O campo e-mail é obrigatório para recuperação.');
+    }
+
+    // 2. Aciona o serviço de envio de e-mail (Via Ethereal/SMTP)
+    return this.authService.recoverPassword(body.email);
+  }
+
+  // ===========================================================================
+  // ROTA 4: RESET PASSWORD (Efetivar Troca de Senha) -> FINAL DO CICLO
+  // ===========================================================================
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; newPass: string }) {
+    // 1. Validação de segurança dos dados recebidos
+    if (!body.token || !body.newPass) {
+      throw new BadRequestException('Token e Nova Senha são obrigatórios.');
+    }
+
+    // 2. Processa a troca no banco de dados
+    return this.authService.resetPassword(body.token, body.newPass);
   }
 }

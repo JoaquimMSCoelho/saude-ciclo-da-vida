@@ -1,17 +1,8 @@
-/**
- * -------------------------------------------------------------------------
- * PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
- * ARQUITETURA: DATA LAYER (Prisma Seeding)
- * GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
- * -------------------------------------------------------------------------
- * MÓDULO: GÊNESE DE DADOS (SEED)
- * DESCRIÇÃO: Popula o banco com dados reais e senhas criptografadas (Bcrypt)
- * 1. Paciente (Seu João)
- * 2. Cuidadora (Maria)
- * 3. Vínculo de Cuidado
- * 4. Remédios, Alertas e Contatos de Emergência.
- * -------------------------------------------------------------------------
- */
+// -------------------------------------------------------------------------
+// ARQUIVO: backend/prisma/seed.ts
+// OBJETIVO: Popular o banco com dados iniciais (Admin + Dados de Teste)
+// STATUS: CORRIGIDO (Compatível com Schema Enterprise)
+// -------------------------------------------------------------------------
 
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -19,13 +10,14 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 INICIANDO A GÊNESE DE DADOS...');
+  console.log('🌱 Iniciando Seed do Banco de Dados...');
 
-  // 1. Limpar dados antigos (Ordem reversa para integridade referencial)
-  await prisma.panicAlert.deleteMany();
+  // 1. Limpeza (Ordem importa por causa das chaves estrangeiras)
+  // Apagamos primeiro os filhos, depois os pais.
   await prisma.intakeLog.deleteMany();
   await prisma.medicationSchedule.deleteMany();
   await prisma.medication.deleteMany();
+  await prisma.panicAlert.deleteMany();
   await prisma.careRelationship.deleteMany();
   await prisma.patientProfile.deleteMany();
   await prisma.emergencyContact.deleteMany();
@@ -33,96 +25,78 @@ async function main() {
 
   console.log('🧹 Banco limpo com sucesso.');
 
-  // 2. GERAR HASH DE SENHA (PADRÃO 123456)
-  // Essencial para que o AuthService consiga validar o login
-  const saltRounds = 10;
-  const commonPasswordHash = await bcrypt.hash('123456', saltRounds);
+  // 2. Criar Senha Hash Padrão (123456)
+  const password = await bcrypt.hash('123456', 10);
 
-  // 3. CRIAR A CUIDADORA (MARIA)
-  const maria = await prisma.user.create({
+  // 3. Criar Usuário ADMIN (Para o Web Admin)
+  const admin = await prisma.user.create({
     data: {
-      email: 'maria.filha@email.com',
-      password: commonPasswordHash, // Senha real criptografada
-      name: 'Maria da Silva',
-      role: 'FAMILIAR',
-      photoUrl: 'https://i.pravatar.cc/150?u=maria',
-    },
-  });
-  console.log(`👤 Cuidadora criada: ${maria.name}`);
-
-  // 4. CRIAR O PACIENTE (SEU JOÃO)
-  const joao = await prisma.user.create({
-    data: {
-      email: 'joao.pai@email.com',
-      password: commonPasswordHash, // Senha real criptografada
-      name: 'João da Silva',
-      role: 'PACIENTE',
-      photoUrl: 'https://i.pravatar.cc/150?u=joao',
-      // Criar Perfil de Saúde junto
+      email: 'admin@saudeciclodavida.com.br',
+      name: 'Administrador Sistema',
+      password: password,
+      role: 'ADMIN',
+      photoUrl: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff',
       profile: {
         create: {
           bloodType: 'O+',
-          height: 175,
-          weight: 80,
-          chronicDiseases: 'Hipertensão, Diabetes Tipo 2',
-          allergies: 'Dipirona',
-          healthInsurance: 'Unimed Idoso - Plano Ouro',
+          obs: 'Super Usuário',
         },
       },
-      // Criar Contatos de Emergência
+    },
+  });
+  console.log(`👤 Admin criado: ${admin.email}`);
+
+  // 4. Criar Usuário PACIENTE (Dona Maria - Para o App Mobile)
+  const paciente = await prisma.user.create({
+    data: {
+      email: 'maria@teste.com',
+      name: 'Maria da Silva',
+      password: password,
+      role: 'PACIENTE',
+      photoUrl: 'https://ui-avatars.com/api/?name=Maria+Silva&background=random',
       emergencyContacts: {
         create: [
-          { name: 'Maria (Filha)', phone: '11999998888', relationship: 'Filha', priority: 1 },
-          { name: 'Dr. Carlos (Cardio)', phone: '11977776666', relationship: 'Médico', priority: 2 },
+          { name: 'João (Filho)', phone: '11999999999', relationship: 'Filho', priority: 1 },
         ],
       },
     },
   });
-  console.log(`👴 Paciente criado: ${joao.name}`);
+  console.log(`👤 Paciente criado: ${paciente.email}`);
 
-  // 5. VINCULAR MARIA CUIDANDO DE JOÃO
-  await prisma.careRelationship.create({
+  // 5. Criar Medicamento para Dona Maria
+  // CORREÇÃO TÉCNICA: 'instructions' agora fica aqui no Medication, não no Schedule
+  const remedio = await prisma.medication.create({
     data: {
-      caregiverId: maria.id,
-      patientId: joao.id,
-      permissions: { canViewGPS: true, canEditMeds: true, canViewHistory: true },
-      status: 'ACTIVE',
-    },
-  });
-  console.log('🔗 Vínculo criado: Maria -> cuida de -> João');
-
-  // 6. CADASTRAR UM REMÉDIO PARA O JOÃO
-  await prisma.medication.create({
-    data: {
-      userId: joao.id,
+      userId: paciente.id,
       name: 'Losartana Potássica',
       dosage: '50mg',
-      stockCurrent: 28,
+      type: 'pill', 
+      instructions: 'Tomar com água, preferencialmente após o café da manhã.', // <--- CAMPO CORRETO
+      stockCurrent: 30,
       stockMin: 5,
-      prescriptionExpires: new Date('2026-06-01T00:00:00Z'),
       schedules: {
         create: [
-          { time: '08:00', frequency: 'Diário', instructions: 'Tomar após café' },
-          { time: '20:00', frequency: 'Diário', instructions: 'Tomar antes de dormir' },
+          { time: '08:00', frequency: 'Diário' }, // Sem instructions aqui
+          { time: '20:00', frequency: 'Diário' }
         ],
       },
     },
   });
-  console.log('💊 Remédio cadastrado: Losartana');
+  console.log(`💊 Medicamento criado: ${remedio.name}`);
 
-  // 7. GERAR UM ALERTA DE PÂNICO (PARA A TORRE VER)
+  // 6. Criar um Alerta de Pânico (Para testar o Dashboard Web)
   await prisma.panicAlert.create({
     data: {
-      userId: joao.id,
-      latitude: -22.7, 
-      longitude: -47.6,
-      resolved: false,
+      userId: paciente.id,
+      latitude: -23.55052,
+      longitude: -46.633308,
       batteryLevel: 15,
+      resolved: false,
     },
   });
-  console.log('🚨 Alerta de Pânico Simulado criado.');
+  console.log('🚨 Alerta de Pânico de teste criado.');
 
-  console.log('✅ GÊNESE CONCLUÍDA COM SUCESSO.');
+  console.log('✅ Seed finalizado com sucesso!');
 }
 
 main()

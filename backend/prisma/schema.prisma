@@ -2,9 +2,7 @@
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // ARQUITETURA: DATA LAYER (PostgreSQL + Prisma ORM)
 // GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
-// -------------------------------------------------------------------------
-// MÓDULO: ESQUEMA DO BANCO DE DADOS (15 TABELAS)
-// DESCRIÇÃO: Estrutura relacional completa.
+// STATUS: ATUALIZADO (Com suporte a UI de Medicamentos)
 // -------------------------------------------------------------------------
 
 generator client {
@@ -38,22 +36,22 @@ model User {
   updatedAt DateTime @updatedAt
 
   // RELACIONAMENTOS (O Usuário é o centro de tudo)
-  profile           PatientProfile?       // 1 Usuário tem 1 Perfil de Saúde
-  emergencyContacts EmergencyContact[]    // Seus contatos de emergência
-  panicAlerts       PanicAlert[]          // Seus pedidos de socorro
-  medications       Medication[]          // Seus remédios
-  appointments      Appointment[]         // Suas consultas
-  personalEvents    PersonalEvent[]       // Sua agenda pessoal (festas, etc)
-  carePlans         CarePlan[]            // Seus planos de dieta/treino
+  profile            PatientProfile?       // 1 Usuário tem 1 Perfil de Saúde
+  emergencyContacts  EmergencyContact[]    // Seus contatos de emergência
+  panicAlerts        PanicAlert[]          // Seus pedidos de socorro
+  medications        Medication[]          // Seus remédios
+  appointments       Appointment[]         // Suas consultas
+  personalEvents     PersonalEvent[]       // Sua agenda pessoal (festas, etc)
+  carePlans          CarePlan[]            // Seus planos de dieta/treino
 
   // SISTEMA DE CUIDADORES (MULTI-TENANT)
   // Quem eu cuido? (Eu sou o cuidador)
-  caringFor            CareRelationship[]    @relation("CaregiverRelation")
+  caringFor          CareRelationship[]    @relation("CaregiverRelation")
   // Quem cuida de mim? (Eu sou o paciente)
-  caredBy              CareRelationship[]    @relation("PatientRelation")
+  caredBy            CareRelationship[]    @relation("PatientRelation")
 
   // TOKEN DE PAREAMENTO (Para vincular via QR Code)
-  pairingTokens        PairingToken[]
+  pairingTokens      PairingToken[]
 }
 
 model PatientProfile {
@@ -76,17 +74,17 @@ model PatientProfile {
 
 // Tabela de ligação "Muitos para Muitos" com permissões
 model CareRelationship {
-  id           String   @id @default(uuid())
+  id             String   @id @default(uuid())
   
-  caregiverId  String   // Quem cuida (Filha)
-  caregiver    User     @relation("CaregiverRelation", fields: [caregiverId], references: [id])
+  caregiverId    String   // Quem cuida (Filha)
+  caregiver      User     @relation("CaregiverRelation", fields: [caregiverId], references: [id])
   
-  patientId    String   // Quem é cuidado (Pai)
-  patient      User     @relation("PatientRelation", fields: [patientId], references: [id])
+  patientId      String   // Quem é cuidado (Pai)
+  patient        User     @relation("PatientRelation", fields: [patientId], references: [id])
   
-  permissions  Json     // O que pode ver? { "canViewGPS": true, "canEditMeds": false }
-  status       String   @default("ACTIVE") // ACTIVE, PENDING, BLOCKED
-  createdAt    DateTime @default(now())
+  permissions    Json     // O que pode ver? { "canViewGPS": true, "canEditMeds": false }
+  status         String   @default("ACTIVE") // ACTIVE, PENDING, BLOCKED
+  createdAt      DateTime @default(now())
 
   @@unique([caregiverId, patientId]) // Evita duplicidade de vínculo
 }
@@ -102,49 +100,58 @@ model PairingToken {
 }
 
 model EmergencyContact {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  name         String
-  phone        String   // WhatsApp
-  relationship String   // Grau de parentesco (Filho, Vizinho)
-  priority     Int      @default(1) // 1 = Avisar primeiro
+  name           String
+  phone          String   // WhatsApp
+  relationship   String   // Grau de parentesco (Filho, Vizinho)
+  priority       Int      @default(1) // 1 = Avisar primeiro
 }
 
 model PanicAlert {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
   
-  latitude     Float
-  longitude    Float
-  batteryLevel Int?     // Nível de bateria no momento do pânico
-  resolved     Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  latitude       Float
+  longitude      Float
+  batteryLevel   Int?     // Nível de bateria no momento do pânico
+  resolved       Boolean  @default(false)
+  createdAt      DateTime @default(now())
 }
 
 // ==========================================================
-// 3. FARMÁCIA & MEDICAMENTOS
+// 3. FARMÁCIA & MEDICAMENTOS (ENTERPRISE + UI SUPPORT)
 // ==========================================================
 
 model Medication {
-  id                 String   @id @default(uuid())
-  userId             String
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  name               String   // Nome comercial
-  activeIngredient   String?  // Princípio ativo
-  dosage             String   // Ex: 50mg
-  stockCurrent       Int      @default(0) // Quantos comprimidos tem na caixa
-  stockMin           Int      @default(5) // Avisar quando chegar em 5
+  name                String   // Nome comercial
+  activeIngredient    String?  // Princípio ativo
+  dosage              String   // Ex: 50mg
   
-  prescriptionDate   DateTime? // Data da receita
+  // INJEÇÃO TÉCNICA: Campo type adicionado para suporte a ícones no App
+  type                String   @default("pill") // pill, liquid, injection, cream
+  
+  instructions        String?  // Instruções gerais (Ex: "Comer antes")
+
+  stockCurrent        Int      @default(0) // Quantos comprimidos tem na caixa
+  stockMin            Int      @default(5) // Avisar quando chegar em 5
+  
+  prescriptionDate    DateTime? // Data da receita
   prescriptionExpires DateTime? // Validade da receita (Para alertar renovação)
   
-  photoUrl           String?  // Foto da caixa
+  photoUrl            String?  // Foto da caixa
   
-  schedules          MedicationSchedule[] // Horários de tomar
+  schedules           MedicationSchedule[] // Horários de tomar
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model MedicationSchedule {
@@ -154,9 +161,9 @@ model MedicationSchedule {
   
   time         String   // Hora (Ex: "08:00")
   frequency    String?  // Texto (Ex: "De 8 em 8h")
-  instructions String?  // "Tomar em jejum"
   
-  logs         IntakeLog[] // Histórico
+  // LOGS: O jeito Enterprise de saber se tomou (Histórico Real)
+  logs         IntakeLog[] 
 }
 
 model IntakeLog {
@@ -239,9 +246,6 @@ model CareTemplate {
   category    String   // DIETA, TREINO, FISIO
   objective   String?  // "Perder Peso", "Ganhar Massa"
   
-  // O Segredo: JSON flexível para guardar qualquer estrutura
-  // Ex Dieta: { "cafe": "Ovos", "almoco": "Salada" }
-  // Ex Treino: { "segunda": ["Supino", "Flexão"], "repeticoes": 10 }
   content     Json     
   
   isPublic    Boolean  @default(false) // Se true, todos veem. Se false, só quem criou.
@@ -257,7 +261,6 @@ model CarePlan {
   title          String   // "Minha Dieta de Setembro"
   category       String   // DIETA, TREINO
   
-  // Aqui fica a cópia do template ou o plano personalizado
   content        Json
   
   startDate      DateTime @default(now())
