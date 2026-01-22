@@ -2,13 +2,15 @@
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // MÓDULO: ROOT COMPONENT (ROTEAMENTO)
 // VERSÃO: FINAL INTEGRADA (Auth + App + Emergência)
+// STATUS: VISUAL RESTAURADO
 // -------------------------------------------------------------------------
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'expo-status-bar';
 
-// --- IMPORTAÇÃO DAS TELAS ---
+// --- IMPORTAÇÃO DAS TELAS (SEU DESIGN ORIGINAL) ---
 
 // 1. Autenticação
 import LoginScreen from './src/screens/LoginScreen';
@@ -17,7 +19,7 @@ import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 
 // 2. Funcionalidades do App
 import HomeScreen from './src/screens/HomeScreen';
-import MedicationScreen from './src/screens/MedicationScreen'; // PRESERVADO
+import MedicationScreen from './src/screens/MedicationScreen';
 
 // 3. Emergência
 import PanicScreen from './src/screens/PanicScreen';
@@ -27,6 +29,7 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <NavigationContainer>
+      <StatusBar style="auto" />
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         
         {/* === GRUPO 1: ACESSO E SEGURANÇA === */}

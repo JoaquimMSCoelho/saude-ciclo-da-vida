@@ -1,47 +1,84 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // MÓDULO: TELA PRINCIPAL (HOME)
-// VERSÃO: FINAL STABLE (Visual Grid + Lógica SOS Offline)
+// VERSÃO: FINAL REFINADA (Alinhamento Perfeito do Logo e Botão Sair)
 // -------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StatusBar, ScrollView, Alert, StyleSheet, Platform } from 'react-native';
 // Ícones Técnicos
 import { Pill, Apple, CalendarDays, Activity } from 'lucide-react-native';
+// Lógica GPS e Rede
+import * as Location from 'expo-location';
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
 
 // Componentes Personalizados
 import PanicButtonSmall from '../components/PanicButtonSmall';
 import LogoutButton from '../components/LogoutButton'; 
 import { styles as globalStyles } from '../styles/global';
-
-// Lógica de Persistência (A Mágica do SOS Offline)
 import { StorageService } from '../services/storage';
 
+// --- CONFIGURAÇÃO DE REDE (IP FIXO) ---
+const API_URL = 'http://192.168.15.11:4000';
+
 export default function HomeScreen({ route, navigation }: any) {
-  // Recebe dados do Login (ou define padrão Visitante)
+  // Recebe dados do Login
   const { user, token } = route.params || { user: { name: 'Visitante' } };
   
-  // LÓGICA 1: Nome Completo (Prioridade para o nome vindo do banco)
-  const fullName = user.name || 'Usuário'; 
+  // LÓGICA 1: FILTRO INTELIGENTE DE NOME (Primeiro + Último)
+  const formatName = (fullName: string) => {
+    if (!fullName) return 'Usuário';
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0]; 
+    return `${parts[0]} ${parts[parts.length - 1]}`;
+  };
+  
+  const displayName = formatName(user.name);
 
-  // LÓGICA 2: PERSISTÊNCIA AUTOMÁTICA (Novo)
-  // Assim que a tela carrega, salvamos o usuário no disco.
-  // Isso permite que o Botão SOS funcione na tela de login depois.
+  // LÓGICA 2: MODO GUARDIÃO (GPS Silencioso)
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const startGuardianMode = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+
+      const sendLocation = async () => {
+        try {
+          let loc = await Location.getCurrentPositionAsync({});
+          await axios.patch(
+            `${API_URL}/users/location`,
+            { lat: loc.coords.latitude, lng: loc.coords.longitude },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        } catch (err) {
+          // Silencioso
+        }
+      };
+
+      sendLocation();
+      intervalId = setInterval(sendLocation, 30000);
+    };
+
     const persistUser = async () => {
       if (user && user.name !== 'Visitante') {
-        console.log('💾 Salvando perfil para SOS Offline...');
         await StorageService.saveUser({
           name: user.name,
           email: user.email || 'user@email.com',
-          // Se tiver foto, salvaria aqui também
         });
       }
     };
-    persistUser();
-  }, [user]);
 
-  // Função de Logout com confirmação
+    startGuardianMode();
+    persistUser();
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [user, token]);
+
+  // Função de Logout
   const handleLogout = () => {
     Alert.alert('Encerrar Sessão', 'Deseja realmente sair do sistema?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -49,63 +86,44 @@ export default function HomeScreen({ route, navigation }: any) {
     ]);
   };
 
-  // Menu de Navegação (Ícones Técnicos)
   const menuItems = [
-    { 
-      title: 'MEDICAMENTOS', 
-      icon: <Pill size={32} color="#000" strokeWidth={1.5} />, 
-      route: 'Medication' 
-    },
-    { 
-      title: 'NUTRIÇÃO', 
-      icon: <Apple size={32} color="#000" strokeWidth={1.5} />, 
-      route: null 
-    }, 
-    { 
-      title: 'AGENDA MÉDICA', 
-      icon: <CalendarDays size={32} color="#000" strokeWidth={1.5} />, 
-      route: null 
-    },
-    { 
-      title: 'SINAIS VITAIS', 
-      icon: <Activity size={32} color="#000" strokeWidth={1.5} />, 
-      route: null 
-    },
+    { title: 'MEDICAMENTOS', icon: <Pill size={32} color="#000" strokeWidth={1.5} />, route: 'Medication' },
+    { title: 'NUTRIÇÃO', icon: <Apple size={32} color="#000" strokeWidth={1.5} />, route: null }, 
+    { title: 'AGENDA MÉDICA', icon: <CalendarDays size={32} color="#000" strokeWidth={1.5} />, route: null },
+    { title: 'SINAIS VITAIS', icon: <Activity size={32} color="#000" strokeWidth={1.5} />, route: null },
   ];
 
   return (
     <View style={globalStyles.container}>
       <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       
-      {/* --- ÁREA DO CABEÇALHO (SAFE AREA) --- */}
+      {/* === ÁREA 1: CABEÇALHO FIXO (TOPO ABSOLUTO) === */}
       <View style={styles.headerTop}>
         
         {/* Bloco de Boas-vindas */}
         <View style={{ flex: 1, marginRight: 10 }}> 
-          <Text style={styles.welcomeLabel}>Bem-vindo,</Text>
-          {/* numberOfLines garante que nomes gigantes não quebrem o layout */}
-          <Text style={styles.userName} numberOfLines={2}>
-            {fullName}
+          <Text style={styles.welcomeLabel}>Bem-vindo(a),</Text>
+          <Text style={styles.userName} numberOfLines={1}>
+            {displayName}
           </Text>
         </View>
         
-        {/* Bloco do Botão Sair (Alinhado à direita) */}
-        <View>
+        {/* Botão Sair (Alinhado na base do nome) */}
+        <View style={{ marginBottom: 2 }}> 
             <LogoutButton onPress={handleLogout} />
         </View>
       </View>
 
-      {/* --- CONTEÚDO COM SCROLL --- */}
+      {/* === ÁREA 2: CONTEÚDO ROLÁVEL === */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
-        {/* ÁREA DA MARCA (Logo + Texto) */}
-        <View style={styles.brandArea}>
+        {/* BRANDING (Ajustado para não cortar) */}
+        <View style={styles.brandingContainer}>
           <Image 
             source={require('../../assets/LogoAppGeral.png')} 
             style={styles.logoGeral} 
           />
           <Text style={styles.appTitle}>Saúde Ciclo da Vida</Text>
-          {/* Divisor estético minimalista */}
           <View style={styles.divider} />
         </View>
 
@@ -128,7 +146,7 @@ export default function HomeScreen({ route, navigation }: any) {
 
       </ScrollView>
 
-      {/* --- BOTÃO PÂNICO (FIXO NO RODAPÉ) --- */}
+      {/* === BOTÃO PÂNICO (RODAPÉ) === */}
       <PanicButtonSmall 
         onPress={() => navigation.navigate('Panic', { user, token })} 
         disabled={false} 
@@ -137,57 +155,66 @@ export default function HomeScreen({ route, navigation }: any) {
   );
 }
 
-// --- FOLHA DE ESTILOS DA HOME (Preservada do seu arquivo original) ---
+// --- ESTILOS DEFINITIVOS ---
 const styles = StyleSheet.create({
+  // Cabeçalho Fixo no Topo
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start', // Alinhamento no topo para suportar 2 linhas de nome
+    alignItems: 'flex-end', // Alinha na base
     paddingHorizontal: 25,
-    // MARGEM DE SEGURANÇA DO TOPO (Para não colar na bateria)
     paddingTop: Platform.OS === 'android' ? 50 : 60, 
-    paddingBottom: 10,
+    paddingBottom: 0, 
+    backgroundColor: '#f8fafc',
   },
   welcomeLabel: {
     fontSize: 14,
-    color: '#6b7280', // Cinza médio
-    marginBottom: 2,
+    color: '#6b7280', 
+    marginBottom: 0, 
     fontWeight: '500',
   },
   userName: {
-    fontSize: 18,
+    fontSize: 18, 
     color: '#000000',
     fontWeight: 'bold',
-    textTransform: 'capitalize', // Primeira letra maiúscula
+    textTransform: 'capitalize',
+    lineHeight: 24, 
   },
+
+  // Área de Conteúdo
   scrollContent: {
     paddingHorizontal: 25,
-    paddingBottom: 120, // Espaço extra no final para o Botão SOS não cobrir nada
+    paddingBottom: 120, 
   },
-  brandArea: {
+  
+  // Área da Marca (Ajuste Fino)
+  brandingContainer: {
     alignItems: 'center',
-    marginTop: 15, 
-    marginBottom: 30,
+    // AJUSTE FINAL: Margem positiva pequena para dar respiro sem descer muito
+    marginTop: 5, 
+    marginBottom: 30, 
   },
   logoGeral: {
-    width: 80, 
-    height: 80,
+    width: 170,  
+    height: 100, 
     resizeMode: 'contain',
   },
   appTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#000000',
-    marginTop: 10,
+    marginTop: 5,
     letterSpacing: 0.5,
   },
   divider: {
     width: 40,
     height: 3,
     backgroundColor: '#000000',
-    marginTop: 8,
+    marginTop: 15, 
     borderRadius: 2,
   },
+
+  // Grid
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -195,26 +222,24 @@ const styles = StyleSheet.create({
   },
   cardTech: {
     backgroundColor: '#FFFFFF',
-    width: '48%', // Ocupa metade da tela (menos a margem)
+    width: '48%', 
     aspectRatio: 1.1, 
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
-    // Sombra Suave
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
-    // Borda Fina
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   iconContainer: {
     marginBottom: 10,
     padding: 10,
-    backgroundColor: '#f3f4f6', // Círculo cinza atrás do ícone
+    backgroundColor: '#f3f4f6', 
     borderRadius: 50,
   },
   cardTitle: {

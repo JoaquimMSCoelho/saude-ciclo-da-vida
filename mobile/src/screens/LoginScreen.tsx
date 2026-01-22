@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // MÓDULO: TELA DE LOGIN
-// VERSÃO: FINAL STABLE (Com Links de Navegação Ativos)
+// VERSÃO: HÍBRIDA (Design Original + Conexão IP Fixa + SecureStore)
 // -------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
@@ -9,48 +9,54 @@ import {
   View, TextInput, TouchableOpacity, Image, StatusBar, 
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, Text 
 } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
 
-import { StorageService, UserProfile } from '../services/storage';
+// --- IMPORTAÇÕES DE ESTILO E COMPONENTES ORIGINAIS ---
 import PanicButtonSmall from '../components/PanicButtonSmall';
-import api from '../services/api';
 import { styles as globalStyles } from '../styles/global';
 
+// --- CONFIGURAÇÃO DE REDE (IP FIXO) ---
+const API_URL = 'http://192.168.15.11:4000'; 
+
 export default function LoginScreen({ navigation }: any) {
-  const [email, setEmail] = useState('joao.pai@email.com');
+  // Alterei para maria@teste.com para garantir que o login funcione com os dados que temos no banco
+  const [email, setEmail] = useState('maria@teste.com');
   const [password, setPassword] = useState('123456');
   const [loading, setLoading] = useState(false);
-  const [localUser, setLocalUser] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    const checkHistory = async () => {
-      const user = await StorageService.getUser();
-      if (user) setLocalUser(user);
-    };
-    checkHistory();
-  }, []);
-
+  
+  // Login: Lógica Nova (Axios Direto + SecureStore)
   const handleLogin = async () => {
+    if (!email || !password) return Alert.alert('Atenção', 'Preencha e-mail e senha.');
+
     setLoading(true);
     try {
-      const response = await api.post('/auth/login', { email, password });
+      console.log(`📡 Conectando em: ${API_URL}/auth/login`);
+      
+      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       const { user, access_token } = response.data;
+      
+      // SALVAMENTO SEGURO (Essencial para o GPS na próxima tela)
+      await SecureStore.setItemAsync('token', access_token);
+      await SecureStore.setItemAsync('user', JSON.stringify(user));
+
+      console.log('✅ Login Autorizado!');
+      // Navega enviando os dados, mantendo compatibilidade com seu código original
       navigation.replace('Home', { user, token: access_token });
+      
     } catch (error) {
-      Alert.alert('Erro de Acesso', 'Verifique suas credenciais ou conexão.');
+      console.error('Erro Login:', error);
+      Alert.alert(
+        'Falha na Conexão', 
+        'Não foi possível conectar ao servidor. Verifique se o Backend está rodando e o IP está correto.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleSOSAction = () => {
-    if (localUser) {
-      navigation.navigate('Panic', { user: localUser });
-    } else {
-      Alert.alert(
-        'Função Indisponível', 
-        'Para sua segurança, o botão SOS só é ativado após o primeiro login neste aparelho.'
-      );
-    }
+    Alert.alert('Segurança', 'Faça login para ativar o sistema de emergência.');
   };
 
   return (
@@ -89,7 +95,7 @@ export default function LoginScreen({ navigation }: any) {
             {loading ? <ActivityIndicator color="#000" /> : <Text style={globalStyles.loginButtonText}>ENTRAR</Text>}
           </TouchableOpacity>
 
-          {/* --- LINKS DE NAVEGAÇÃO ATIVOS --- */}
+          {/* --- SEUS LINKS ORIGINAIS RESTAURADOS --- */}
           <TouchableOpacity 
             style={{ marginTop: 20 }} 
             onPress={() => navigation.navigate('ForgotPassword')}
@@ -103,15 +109,16 @@ export default function LoginScreen({ navigation }: any) {
           >
             <Text style={styles.linkText}>Ainda não tem conta? <Text style={{fontWeight: 'bold', color: '#0891b2'}}>Cadastre-se</Text></Text>
           </TouchableOpacity>
-          {/* ---------------------------------- */}
         </View>
       </KeyboardAvoidingView>
 
-      <PanicButtonSmall onPress={handleSOSAction} disabled={!localUser} />
+      {/* Botão SOS mantido (desativado antes do login) */}
+      <PanicButtonSmall onPress={handleSOSAction} disabled={true} />
     </View>
   );
 }
 
+// --- SEUS ESTILOS ORIGINAIS ---
 const styles = StyleSheet.create({
   content: {
     flex: 1,
