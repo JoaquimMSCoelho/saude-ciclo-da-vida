@@ -2,7 +2,7 @@
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // ARQUITETURA: DATA LAYER (PostgreSQL + Prisma ORM)
 // GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
-// STATUS: ATUALIZADO (Com suporte a UI de Medicamentos)
+// STATUS: ATUALIZADO (Com Modo Guardião / GPS Ativo)
 // -------------------------------------------------------------------------
 
 generator client {
@@ -34,6 +34,12 @@ model User {
   role      UserRole @default(PACIENTE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // --- GEOLOCALIZAÇÃO ATIVA (MODO GUARDIÃO) ---
+  // Campos novos para rastreamento passivo (sem botão de pânico)
+  lastLatitude  Float?
+  lastLongitude Float?
+  lastSeenAt    DateTime? // Data/Hora da última posição recebida
 
   // RELACIONAMENTOS (O Usuário é o centro de tudo)
   profile            PatientProfile?       // 1 Usuário tem 1 Perfil de Saúde

@@ -2,8 +2,8 @@
 
 // -------------------------------------------------------------------------
 // ARQUIVO: web-admin/src/app/page.tsx
-// TIPO: DASHBOARD DE MONITORAMENTO (Frontend Next.js)
-// ATUALIZAÇÃO: Rota da API alterada para '/sos' (Porta 4000)
+// TIPO: DASHBOARD DE MONITORAMENTO
+// STATUS: FINAL (Link do Google Maps Oficializado e Testado)
 // -------------------------------------------------------------------------
 
 import { useEffect, useState } from 'react';
@@ -12,10 +12,10 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   Activity, Users, AlertTriangle, MapPin, 
-  Battery, CheckCircle, Wifi, WifiOff 
+  CheckCircle, Wifi, WifiOff, Navigation 
 } from 'lucide-react';
 
-// 1. INTERFACE DE DADOS
+// 1. INTERFACES DE DADOS
 interface Alert {
   id: string;
   latitude: number;
@@ -26,25 +26,38 @@ interface Alert {
   user: {
     name: string;
     photoUrl: string;
-    chronicDiseases?: string;
   };
+}
+
+interface User {
+  id: string;
+  name: string;
+  photoUrl: string;
+  lastLatitude?: number;
+  lastLongitude?: number;
+  lastSeenAt?: string;
+  role: string;
 }
 
 export default function Dashboard() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [users, setUsers] = useState<User[]>([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // 2. BUSCAR ALERTAS (ROTA NOVA: /sos)
-  const fetchAlerts = async () => {
+  // 2. BUSCAR DADOS
+  const fetchData = async () => {
     try {
-      // --- MUDANÇA CRÍTICA: Rota '/sos' na porta 4000 ---
-      const response = await axios.get('http://localhost:4000/sos'); 
-      // --------------------------------------------------
-      
-      // Filtra apenas os não resolvidos
-      const activeAlerts = response.data.filter((a: Alert) => !a.resolved);
+      // A. Busca Alertas
+      const resAlerts = await axios.get('http://localhost:4000/sos');
+      const activeAlerts = resAlerts.data.filter((a: Alert) => !a.resolved);
       setAlerts(activeAlerts);
+
+      // B. Busca Usuários
+      const resUsers = await axios.get('http://localhost:4000/users');
+      const trackedUsers = resUsers.data.filter((u: User) => u.lastLatitude && u.role === 'PACIENTE');
+      setUsers(trackedUsers);
+
       setError(false);
     } catch (err) {
       console.error('Erro de conexão:', err);
@@ -54,171 +67,147 @@ export default function Dashboard() {
     }
   };
 
-  // 3. RESOLVER ALERTA (ROTA NOVA: /sos)
   const resolveAlert = async (id: string) => {
     try {
-      // --- MUDANÇA CRÍTICA: Rota '/sos' na porta 4000 ---
       await axios.patch(`http://localhost:4000/sos/${id}`, { resolved: true });
-      // --------------------------------------------------
-      
-      // Atualização Otimista (Remove da tela na hora)
-      setAlerts((current) => current.filter(alert => alert.id !== id));
+      fetchData(); 
     } catch (err) {
-      alert('Erro ao finalizar chamado. Verifique a conexão com o servidor.');
+      alert('Erro ao finalizar.');
     }
   };
 
-  // 4. ATUALIZAÇÃO AUTOMÁTICA (POLLING 3s)
   useEffect(() => {
-    fetchAlerts();
-    const interval = setInterval(fetchAlerts, 3000);
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // 5. RENDERIZAÇÃO VISUAL (Design System PGT-01)
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
       
       {/* HEADER */}
-      <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold shadow-cyan-200 shadow-lg">
+          <div className="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
             SCV
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800 tracking-tight">CENTRAL DE MONITORAMENTO</h1>
-            <p className="text-xs text-gray-500 font-medium">Enterprise Edition • v1.0</p>
+            <h1 className="text-xl font-bold text-gray-800">CENTRAL DE MONITORAMENTO</h1>
+            <p className="text-xs text-gray-500 font-medium">Enterprise Edition • v2.4 (Maps Standard)</p>
           </div>
         </div>
-        
-        {/* Status da Conexão */}
         <div className={`flex items-center gap-3 px-4 py-2 rounded-full border ${error ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
           {error ? <WifiOff size={18} className="text-red-500" /> : <Wifi size={18} className="text-green-500" />}
           <span className={`text-sm font-bold ${error ? 'text-red-600' : 'text-green-600'}`}>
-            {error ? 'OFFLINE (Tentando Porta 4000)' : 'ONLINE (Porta 4000)'}
+            {error ? 'OFFLINE' : 'SISTEMA ONLINE'}
           </span>
         </div>
       </header>
 
-      <main className="p-8 max-w-7xl mx-auto">
+      <main className="p-8 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* KPIs (Indicadores) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Monitorados */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <Users className="text-blue-600" size={24} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Monitorados</p>
-              <p className="text-2xl font-bold text-gray-900">Ativos</p>
-            </div>
-          </div>
+        {/* ESQUERDA: ALERTAS DE PÂNICO */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+            <AlertTriangle className="text-red-600" />
+            Alertas de Emergência ({alerts.length})
+          </h2>
 
-          {/* Alertas Pendentes */}
-          <div className={`bg-white p-6 rounded-xl border shadow-sm flex items-center gap-4 transition-all ${alerts.length > 0 ? 'border-red-200 ring-2 ring-red-100' : 'border-gray-200'}`}>
-            <div className={`p-3 rounded-lg ${alerts.length > 0 ? 'bg-red-100 animate-pulse' : 'bg-gray-100'}`}>
-              <AlertTriangle className={alerts.length > 0 ? 'text-red-600' : 'text-gray-400'} size={24} />
+          {alerts.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-sm">
+              <CheckCircle className="text-green-500 mx-auto mb-2" size={32} />
+              <p className="text-gray-500">Nenhum pedido de socorro ativo.</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Alertas Pendentes</p>
-              <p className={`text-2xl font-bold ${alerts.length > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                {alerts.length}
-              </p>
-            </div>
-          </div>
-
-          {/* Status API */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
-            <div className="p-3 bg-green-50 rounded-lg">
-              <Activity className="text-green-600" size={24} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Conexão API</p>
-              <p className="text-2xl font-bold text-green-600">Porta 4000</p>
-            </div>
-          </div>
-        </div>
-
-        {/* TÍTULO DA SEÇÃO */}
-        <div className="mb-6 flex justify-between items-center">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <AlertTriangle size={20} className="text-gray-400" />
-                Ocorrências em Tempo Real (/sos)
-            </h2>
-            {loading && <span className="text-sm text-gray-400 animate-pulse">Buscando dados...</span>}
-        </div>
-
-        {/* ESTADO VAZIO (SEM ALERTAS) */}
-        {!loading && !error && alerts.length === 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-16 text-center">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="text-green-500" size={40} />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800">Tudo Tranquilo</h3>
-            <p className="text-gray-500 mt-2">Nenhum pedido de socorro ativo na rota SOS.</p>
-          </div>
-        )}
-
-        {/* GRID DE ALERTAS (CARDS) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {alerts.map((alert) => (
-            <div key={alert.id} className="bg-white rounded-xl border-2 border-red-100 shadow-lg shadow-red-100/50 overflow-hidden hover:border-red-300 transition-all group">
-              
-              {/* Header do Card */}
-              <div className="bg-red-50 px-6 py-4 border-b border-red-100 flex justify-between items-start">
-                 <div className="flex items-center gap-3">
-                    <img 
-                      src={alert.user?.photoUrl || 'https://ui-avatars.com/api/?name=User&background=random'} 
-                      alt="User" 
-                      className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
-                    />
-                    <div>
-                        <h3 className="font-bold text-gray-900">{alert.user?.name || 'Desconhecido'}</h3>
-                        <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit mt-1">
-                            <Activity size={10} /> PÂNICO
-                        </span>
+          ) : (
+            <div className="space-y-4">
+              {alerts.map((alert) => (
+                <div key={alert.id} className="bg-white rounded-xl border-l-4 border-red-500 shadow-md p-6 animate-pulse">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <img src={alert.user?.photoUrl} className="w-12 h-12 rounded-full bg-gray-200" alt="User" />
+                      <div>
+                        <h3 className="font-bold text-lg">{alert.user?.name}</h3>
+                        <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-full">SOS ATIVO</span>
+                      </div>
                     </div>
-                 </div>
-                 <div className="text-right">
-                    <span className="text-xs font-mono text-gray-500 block">Bateria</span>
-                    <span className={`font-bold ${alert.batteryLevel < 20 ? 'text-red-600' : 'text-green-600'}`}>
-                        {alert.batteryLevel}%
-                    </span>
-                 </div>
-              </div>
-
-              {/* Corpo do Card */}
-              <div className="p-6">
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                    <Activity size={16} className="text-gray-400" />
-                    <span>Ocorrido {formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR, addSuffix: true })}</span>
-                </div>
-
-                <div className="space-y-3">
-                    {/* Link para o Mapa */}
+                    <div className="text-right">
+                       <span className="block font-bold text-red-600">{alert.batteryLevel}% Bateria</span>
+                       <span className="text-xs text-gray-400">
+                         {formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR, addSuffix: true })}
+                       </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* LINK CORRIGIDO PARA PADRÃO OFICIAL */}
                     <a 
-                      href={`http://googleusercontent.com/maps.google.com/?q=${alert.latitude},${alert.longitude}`}
+                      href={`https://www.google.com/maps?q=${alert.latitude},${alert.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full bg-white border border-gray-300 text-gray-700 font-semibold py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-lg flex items-center justify-center gap-2"
                     >
-                        <MapPin size={18} />
-                        Localizar no Mapa
+                      <MapPin size={18} /> Ver Local
                     </a>
-
-                    {/* Botão Resolver */}
                     <button 
                       onClick={() => resolveAlert(alert.id)}
-                      className="flex items-center justify-center gap-2 w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-colors shadow-md shadow-green-200"
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2"
                     >
-                        <CheckCircle size={18} />
-                        Finalizar Atendimento
+                      <CheckCircle size={18} /> Atender
                     </button>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+        </div>
+
+        {/* DIREITA: MONITORAMENTO ATIVO */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+            <Navigation className="text-cyan-600" />
+            Rastreamento Ativo ({users.length})
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4">
+            {users.length === 0 ? (
+               <div className="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-sm">
+                 <Users className="text-gray-400 mx-auto mb-2" size={32} />
+                 <p className="text-gray-500">Nenhum paciente com GPS ativo.</p>
+               </div>
+            ) : (
+              users.map((user) => (
+                <div key={user.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:border-cyan-300 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <img src={user.photoUrl} className="w-14 h-14 rounded-full border-2 border-white shadow-sm" alt="User" />
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900">{user.name}</h3>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                          <Activity size={12} className="text-cyan-500" />
+                          <span>
+                            Visto {user.lastSeenAt ? formatDistanceToNow(new Date(user.lastSeenAt), { locale: ptBR, addSuffix: true }) : 'Recentemente'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* LINK CORRIGIDO PARA PADRÃO OFICIAL */}
+                    <a 
+                      href={`https://www.google.com/maps?q=${user.lastLatitude},${user.lastLongitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-cyan-50 text-cyan-700 hover:bg-cyan-100 p-3 rounded-full transition-colors"
+                      title="Abrir no Mapa"
+                    >
+                      <MapPin size={20} />
+                    </a>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
       </main>

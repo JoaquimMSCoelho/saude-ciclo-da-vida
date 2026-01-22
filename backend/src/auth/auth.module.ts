@@ -3,7 +3,8 @@
 // ARQUITETURA: MODULE LAYER
 // -------------------------------------------------------------------------
 // MÓDULO: AUTH MODULE
-// DESCRIÇÃO: Registra as dependências necessárias para o Login.
+// DESCRIÇÃO: Registra login, tokens e dependências de banco.
+// STATUS: CORRIGIDO (Chave 'Hardcoded' para eliminar erro 401)
 // -------------------------------------------------------------------------
 
 import { Module } from '@nestjs/common';
@@ -13,14 +14,17 @@ import { UsersModule } from '../users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
-import { PrismaService } from '../prisma.service'; // <--- IMPORTANTE: Importar o Prisma
+import { PrismaService } from '../prisma.service';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
+    // AQUI ESTÁ A SOLUÇÃO NUCLEAR:
+    // Definimos a chave diretamente como string. 
+    // Isso obriga o sistema a usar 'SEGREDOSUPREMO' para criar o token.
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'segredo_padrao_dev',
+      secret: 'SEGREDOSUPREMO', 
       signOptions: { expiresIn: '1d' },
     }),
   ],
@@ -28,7 +32,7 @@ import { PrismaService } from '../prisma.service'; // <--- IMPORTANTE: Importar 
   providers: [
     AuthService, 
     JwtStrategy,
-    PrismaService // <--- A CORREÇÃO: O Auth precisa conhecer o Prisma para fazer o Auto-Repair
+    PrismaService // Mantido para garantir acesso ao banco
   ],
   exports: [AuthService],
 })
