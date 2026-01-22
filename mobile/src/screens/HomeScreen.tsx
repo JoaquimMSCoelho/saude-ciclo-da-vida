@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // MÓDULO: TELA PRINCIPAL (HOME)
-// VERSÃO: FINAL REFINADA (Alinhamento Perfeito do Logo e Botão Sair)
+// VERSÃO: UNIVERSAL STANDARD (LogoApp 120px - Identidade Unificada)
 // -------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
@@ -26,7 +26,7 @@ export default function HomeScreen({ route, navigation }: any) {
   // Recebe dados do Login
   const { user, token } = route.params || { user: { name: 'Visitante' } };
   
-  // LÓGICA 1: FILTRO INTELIGENTE DE NOME (Primeiro + Último)
+  // LÓGICA 1: FILTRO INTELIGENTE DE NOME
   const formatName = (fullName: string) => {
     if (!fullName) return 'Usuário';
     const parts = fullName.trim().split(/\s+/);
@@ -97,33 +97,30 @@ export default function HomeScreen({ route, navigation }: any) {
     <View style={globalStyles.container}>
       <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       
-      {/* === ÁREA 1: CABEÇALHO FIXO (TOPO ABSOLUTO) === */}
+      {/* === ÁREA 1: CABEÇALHO FIXO === */}
       <View style={styles.headerTop}>
-        
-        {/* Bloco de Boas-vindas */}
         <View style={{ flex: 1, marginRight: 10 }}> 
           <Text style={styles.welcomeLabel}>Bem-vindo(a),</Text>
           <Text style={styles.userName} numberOfLines={1}>
             {displayName}
           </Text>
         </View>
-        
-        {/* Botão Sair (Alinhado na base do nome) */}
         <View style={{ marginBottom: 2 }}> 
             <LogoutButton onPress={handleLogout} />
         </View>
       </View>
 
-      {/* === ÁREA 2: CONTEÚDO ROLÁVEL === */}
+      {/* === ÁREA 2: CONTEÚDO === */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
-        {/* BRANDING (Ajustado para não cortar) */}
+        {/* BRANDING (PADRÃO UNIVERSAL 120px) */}
         <View style={styles.brandingContainer}>
+          {/* MUDANÇA: LogoApp.png substitui LogoAppGeral + Texto */}
           <Image 
-            source={require('../../assets/LogoAppGeral.png')} 
-            style={styles.logoGeral} 
+            source={require('../../assets/LogoApp.png')} 
+            style={styles.universalLogo} 
           />
-          <Text style={styles.appTitle}>Saúde Ciclo da Vida</Text>
+          
           <View style={styles.divider} />
         </View>
 
@@ -146,7 +143,7 @@ export default function HomeScreen({ route, navigation }: any) {
 
       </ScrollView>
 
-      {/* === BOTÃO PÂNICO (RODAPÉ) === */}
+      {/* === BOTÃO PÂNICO === */}
       <PanicButtonSmall 
         onPress={() => navigation.navigate('Panic', { user, token })} 
         disabled={false} 
@@ -157,11 +154,10 @@ export default function HomeScreen({ route, navigation }: any) {
 
 // --- ESTILOS DEFINITIVOS ---
 const styles = StyleSheet.create({
-  // Cabeçalho Fixo no Topo
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end', // Alinha na base
+    alignItems: 'flex-end', 
     paddingHorizontal: 25,
     paddingTop: Platform.OS === 'android' ? 50 : 60, 
     paddingBottom: 0, 
@@ -180,31 +176,20 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
     lineHeight: 24, 
   },
-
-  // Área de Conteúdo
   scrollContent: {
     paddingHorizontal: 25,
     paddingBottom: 120, 
   },
-  
-  // Área da Marca (Ajuste Fino)
   brandingContainer: {
     alignItems: 'center',
-    // AJUSTE FINAL: Margem positiva pequena para dar respiro sem descer muito
-    marginTop: 5, 
+    marginTop: 10, 
     marginBottom: 30, 
   },
-  logoGeral: {
-    width: 170,  
-    height: 100, 
+  // --- PADRÃO UNIVERSAL ---
+  universalLogo: {
+    width: 120,   // MEDIDA PADRÃO
+    height: 120,  // MEDIDA PADRÃO
     resizeMode: 'contain',
-  },
-  appTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    marginTop: 5,
-    letterSpacing: 0.5,
   },
   divider: {
     width: 40,
@@ -213,8 +198,6 @@ const styles = StyleSheet.create({
     marginTop: 15, 
     borderRadius: 2,
   },
-
-  // Grid
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
