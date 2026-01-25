@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // MÓDULO: RECUPERAÇÃO DE SENHA
-// VERSÃO: ROLLBACK STABLE (Design Clean 120px - Fluxo Natural)
+// VERSÃO: HYBRID LAYOUT (Logo Topo Padrão + Corpo Centralizado)
 // -------------------------------------------------------------------------
 
 import React, { useState } from 'react';
@@ -19,7 +19,6 @@ export default function ForgotPasswordScreen({ navigation }: any) {
       Alert.alert('Atenção', 'Digite seu e-mail para continuar.');
       return;
     }
-    // Lógica original mantida
     Alert.alert(
       'Solicitação Enviada', 
       `Se o e-mail ${email} estiver cadastrado, você receberá um link de recuperação em instantes.`,
@@ -35,51 +34,59 @@ export default function ForgotPasswordScreen({ navigation }: any) {
         behavior={Platform.OS === "ios" ? "padding" : "height"} 
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+            contentContainerStyle={styles.scrollContent} 
+            showsVerticalScrollIndicator={false}
+        >
             
-            {/* 1. CABEÇALHO (PADRÃO UNIVERSAL 120px) */}
-            <View style={styles.header}>
+            {/* 1. ÁREA DO LOGO (FIXA NO TOPO - PADRÃO UNIVERSAL) */}
+            <View style={styles.topHeader}>
               <Image 
                 source={require('../../assets/LogoApp.png')} 
                 style={styles.universalLogo} 
               />
-              <Text style={styles.title}>Recuperar Acesso</Text>
-              <Text style={styles.subtitle}>
-                 Digite seu e-mail para redefinir a senha.
-              </Text>
             </View>
 
-            {/* 2. FORMULÁRIO COMPACTO */}
-            <View style={styles.formArea}>
-              
-              <View style={styles.inputGroup}>
-                 <TextInput 
-                    style={styles.input} 
-                    placeholder="E-mail Cadastrado"
-                    placeholderTextColor="#9CA3AF"
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                 />
-              </View>
+            {/* 2. ÁREA CENTRAL (OCUPA O ESPAÇO RESTANTE) */}
+            <View style={styles.centerBody}>
+                
+                <View style={styles.textBlock}>
+                    <Text style={styles.title}>Recuperar Acesso</Text>
+                    <Text style={styles.subtitle}>
+                        Digite seu e-mail para redefinir a senha.
+                    </Text>
+                </View>
 
-              {/* BOTÃO PRIMÁRIO (AZUL REAL) */}
-              <TouchableOpacity 
-                style={styles.primaryButton} 
-                onPress={handleRecover}
-              >
-                <Text style={styles.primaryButtonText}>ENVIAR LINK</Text>
-              </TouchableOpacity>
+                {/* FORMULÁRIO */}
+                <View style={styles.formArea}>
+                    <View style={styles.inputGroup}>
+                        <TextInput 
+                            style={styles.input} 
+                            placeholder="E-mail Cadastrado" 
+                            placeholderTextColor="#9CA3AF"
+                            value={email}
+                            onChangeText={setEmail}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                        />
+                    </View>
 
-              {/* BOTÃO CANCELAR (Discreto) */}
-              <TouchableOpacity 
-                style={styles.cancelButton} 
-                onPress={() => navigation.goBack()}
-              >
-                <Text style={styles.cancelText}>Cancelar</Text>
-              </TouchableOpacity>
+                    {/* BOTÃO PRIMÁRIO (ENVIAR) */}
+                    <TouchableOpacity 
+                        style={styles.primaryButton} 
+                        onPress={handleRecover}
+                    >
+                        <Text style={styles.primaryButtonText}>ENVIAR LINK</Text>
+                    </TouchableOpacity>
 
+                    {/* BOTÃO SECUNDÁRIO (CANCELAR EM BLOCO) */}
+                    <TouchableOpacity 
+                        style={styles.cancelBlockButton} 
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Text style={styles.cancelBlockText}>CANCELAR</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
         </ScrollView>
@@ -97,18 +104,32 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 30,
     paddingTop: Platform.OS === 'android' ? 50 : 60,
+    paddingBottom: 40,
   },
   
-  header: {
+  // LOGO FIXO NO TOPO
+  topHeader: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 10, // Pequeno espaço antes de começar o bloco central
   },
-  // PADRÃO 120px
   universalLogo: {
     width: 120,
     height: 120,
     resizeMode: 'contain',
-    marginBottom: 10,
+  },
+
+  // CORPO CENTRALIZADO
+  // flex: 1 faz este bloco ocupar todo o espaço vertical disponível abaixo do logo
+  // justifyContent: 'center' alinha o conteúdo no meio desse espaço
+  centerBody: {
+    flex: 1,
+    justifyContent: 'center', 
+    marginBottom: 60, // Ajuste para elevar um pouco visualmente
+  },
+
+  textBlock: {
+    alignItems: 'center',
+    marginBottom: 30,
   },
   title: {
     fontSize: 22,
@@ -125,7 +146,7 @@ const styles = StyleSheet.create({
   },
 
   formArea: {
-    flex: 1,
+    width: '100%',
   },
   inputGroup: {
     marginBottom: 20,
@@ -145,6 +166,7 @@ const styles = StyleSheet.create({
     paddingVertical: 18, 
     borderRadius: 12, 
     alignItems: 'center', 
+    marginBottom: 15, 
     shadowColor: '#2563EB', 
     shadowOffset: { width: 0, height: 4 }, 
     shadowOpacity: 0.2, 
@@ -158,14 +180,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  cancelButton: {
-    marginTop: 20,
+  // ESTILO OUTLINE PARA O BOTÃO CANCELAR
+  cancelBlockButton: {
+    backgroundColor: '#FFFFFF', 
+    paddingVertical: 18, 
+    borderRadius: 12, 
     alignItems: 'center',
-    padding: 10,
+    borderWidth: 1,
+    borderColor: '#EF4444', // Borda Vermelha
   },
-  cancelText: {
-    color: '#6B7280', 
-    fontSize: 14, 
-    fontWeight: '500',
+  cancelBlockText: {
+    color: '#EF4444', // Texto Vermelho
+    fontWeight: 'bold', 
+    fontSize: 16, 
+    letterSpacing: 0.5,
   }
 });

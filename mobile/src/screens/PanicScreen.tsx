@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // ARQUIVO: mobile/src/screens/PanicScreen.tsx
-// TIPO: TELA DE EMERGÊNCIA (FINAL ENTERPRISE)
-// ATUALIZAÇÃO: Rota da API alterada para '/sos'
+// TIPO: TELA DE EMERGÊNCIA (FINAL ENTERPRISE + UPGRADE EMOCIONAL)
+// ATUALIZAÇÃO: Fusão Haptics + Narrativa Afetiva (Mantendo 100% do Visual)
 // -------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
@@ -14,6 +14,8 @@ import {
   Alert, 
   Vibration 
 } from 'react-native';
+import * as Haptics from 'expo-haptics'; // Injeção: Interatividade Sensorial
+
 // Ícones Técnicos
 import { MapPin, Phone, XCircle, Siren, Heart, Signal } from 'lucide-react-native'; 
 import { styles as globalStyles } from '../styles/global';
@@ -37,7 +39,11 @@ export default function PanicScreen({ navigation, route }: any) {
   };
 
   const handleSOSAction = async () => {
-    setStatus('CONECTANDO SATÉLITE...');
+    // INJEÇÃO: Resposta sensorial imediata (Toque que deixa memória)
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+    // INJEÇÃO: Narrativa em vez de técnica (Conforme Guia de Mídia Social)
+    setStatus('CONECTANDO PROTEÇÃO...'); 
     Vibration.vibrate(1000); // Vibração longa de confirmação tátil
 
     try {
@@ -51,7 +57,7 @@ export default function PanicScreen({ navigation, route }: any) {
       });
 
       // Sucesso
-      setStatus('ALERTA ENVIADO!');
+      setStatus('PROTEÇÃO ATIVADA!'); // Narrativa Final Afetiva
       Alert.alert(
         'SOCORRO SOLICITADO', 
         'A Central de Monitoramento confirmou o recebimento do seu alerta.',

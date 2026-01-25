@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // MÓDULO: TELA DE AUTENTICAÇÃO (LOGIN)
-// VERSÃO: ROLLBACK STABLE (Placeholders Internos - Sem Espaçadores)
+// VERSÃO: COMPACT ENTERPRISE (Placeholders Internos + Espaçamento Otimizado)
 // -------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
@@ -48,8 +48,10 @@ export default function LoginScreen({ navigation }: any) {
 
   // --- LÓGICA DE LOGIN/CADASTRO ---
   const handleSubmit = async () => {
+    // Validação Básica
     if (!email || !password) return Alert.alert('Atenção', 'Preencha os campos obrigatórios.');
     
+    // Validação extra para Cadastro
     if (!isLoginTab) {
         if (!name) return Alert.alert('Atenção', 'Digite seu nome completo.');
         if (password !== confirmPassword) return Alert.alert('Erro', 'As senhas não coincidem.');
@@ -67,6 +69,7 @@ export default function LoginScreen({ navigation }: any) {
 
       const response = await axios.post(`${API_URL}${endpoint}`, payload);
       
+      // Cenário 1: Cadastro realizado
       if (!isLoginTab) {
           Alert.alert('Sucesso', 'Conta criada! Faça login para continuar.');
           setIsLoginTab(true);
@@ -74,6 +77,7 @@ export default function LoginScreen({ navigation }: any) {
           return;
       }
 
+      // Cenário 2: Login realizado
       const { user, access_token } = response.data;
       
       await SecureStore.setItemAsync('token', access_token);
@@ -117,7 +121,7 @@ export default function LoginScreen({ navigation }: any) {
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
-          {/* 1. LOGO */}
+          {/* 1. LOGO (PADRÃO UNIVERSAL 120px) */}
           <View style={styles.header}>
              <Image source={require('../../assets/LogoApp.png')} style={styles.logo} />
           </View>
@@ -139,7 +143,7 @@ export default function LoginScreen({ navigation }: any) {
               </TouchableOpacity>
           </View>
 
-          {/* 3. FORMULÁRIO */}
+          {/* 3. FORMULÁRIO COMPACTO (Placeholders Internos) */}
           <View style={styles.formArea}>
             
             {!isLoginTab && (
@@ -247,12 +251,14 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 50 : 60,
   },
   
+  // Header Compacto
   header: { 
     alignItems: 'center', 
-    marginBottom: 20 
+    marginBottom: 20 // 2 Linhas de respiro
   },
   logo: { width: 120, height: 120, resizeMode: 'contain' },
   
+  // Abas
   tabContainer: { flexDirection: 'row', marginBottom: 25, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   tabButton: { flex: 1, paddingVertical: 15, alignItems: 'center' },
   activeTab: { borderBottomWidth: 2, borderBottomColor: '#2563EB' },
@@ -260,6 +266,7 @@ const styles = StyleSheet.create({
   activeTabText: { color: '#2563EB', fontWeight: 'bold' },
 
   formArea: { flex: 1 },
+  // Espaçamento Otimizado (Não grudado, mas compacto)
   inputGroup: { marginBottom: 15 },
   input: { 
     backgroundColor: '#F9FAFB', 
