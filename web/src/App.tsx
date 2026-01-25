@@ -1,6 +1,7 @@
 // -------------------------------------------------------------------------
+// PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // ARQUIVO: E:\Projetos\SaudeCicloDaVida\web\src\App.tsx
-// OBJETIVO: DASHBOARD CONECTADO + STATUS VISUAL
+// OBJETIVO: LAYOUT TRIPLO COM PERSISTÊNCIA E NAVEGAÇÃO GEOGRÁFICA ATIVA
 // -------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
@@ -10,36 +11,66 @@ import {
   CheckCircle, Activity, User, Wifi, WifiOff 
 } from 'lucide-react';
 
+// --- INFRAESTRUTURA GEOGRÁFICA ---
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
 import { socketService } from './services/socket';
 
-// --- COMPONENTE CENTRAL DE MONITORAMENTO ---
+// Fix para ícones do Leaflet (Correção técnica para React)
+const DefaultIcon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Sub-componente para centralizar o mapa automaticamente com efeito reativo
+function ChangeView({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, 15);
+  }, [center, map]);
+  return null;
+}
+
+// --- COMPONENTE: PAINEL DASHBOARD ---
 const DashboardHome = () => {
-  const [alerts, setAlerts] = useState<any[]>([]);
+  // PERSISTÊNCIA: Carrega do armazenamento local ao iniciar para não perder no F5
+  const [alerts, setAlerts] = useState<any[]>(() => {
+    const saved = localStorage.getItem('@SaudeCiclo:alerts');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [connectionStatus, setConnectionStatus] = useState(false);
+  const [mapPosition, setMapPosition] = useState<[number, number]>([-22.7348, -47.6476]);
+
+  // Salva no LocalStorage sempre que a lista de alertas for modificada
+  useEffect(() => {
+    localStorage.setItem('@SaudeCiclo:alerts', JSON.stringify(alerts));
+  }, [alerts]);
 
   useEffect(() => {
     // 1. Iniciar Conexão
     socketService.connect();
 
-    // 2. Monitorar estado da conexão para mudar o Botão Visual
+    // 2. Monitorar estado da conexão
     socketService.socket?.on('connect', () => setConnectionStatus(true));
     socketService.socket?.on('disconnect', () => setConnectionStatus(false));
 
-    // 3. OUVIR O SOS DO CELULAR
+    // 3. Ouvir SOS em Tempo Real
     socketService.on('triggerSOS', (data) => {
-      console.log('🚨 SOS RECEBIDO:', data);
-      
       const newAlert = {
-        id: Date.now(),
-        // Se vier nome do backend usa, senão usa genérico
+        id: Date.now().toString(), // ID único string para persistência e remoção
         name: data.userName || `Usuário ${data.userId?.substring(0,4)}`, 
-        initials: 'SOS',
         battery: data.battery || '??%',
         time: 'Agora mesmo',
-        location: data.location || {}
+        location: [data.location?.latitude || -22.7348, data.location?.longitude || -47.6476] as [number, number]
       };
-
       setAlerts(prev => [newAlert, ...prev]);
+      setMapPosition(newAlert.location);
     });
 
     return () => {
@@ -47,32 +78,46 @@ const DashboardHome = () => {
     };
   }, []);
 
+  // FUNÇÃO DE RESOLUÇÃO: Remove o alerta da lista e do LocalStorage
+  const handleResolveAlert = (id: string) => {
+    setAlerts(prev => prev.filter(alert => alert.id !== id));
+  };
+
   return (
-    <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%' }}>
       
-      {/* HEADER ESPECÍFICO DA PÁGINA COM O BOTÃO DE STATUS */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', textTransform: 'uppercase' }}>
+      {/* HEADER SUPERIOR */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', textTransform: 'uppercase' }}>
             CENTRAL DE MONITORAMENTO
-        </h2>
+          </h2>
+          <p style={{ color: '#6B7280', fontSize: '14px' }}>Enterprise Edition • v2.4 (Maps Standard)</p>
+        </div>
         
-        {/* BOTÃO DE STATUS (IGUAL IMAGEM 3) */}
         <div className={`status-pill ${connectionStatus ? '' : 'offline'}`}>
             {connectionStatus ? <Wifi size={16} /> : <WifiOff size={16} />}
             {connectionStatus ? 'SISTEMA ONLINE' : 'SISTEMA OFFLINE'}
         </div>
       </div>
 
-      <div className="dashboard-grid">
-        {/* COLUNA 1: ALERTAS */}
-        <div>
+      {/* --- GRID TRIPLO INTEGRADO --- */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '380px 1fr 380px', 
+        gap: '24px', 
+        height: 'calc(100vh - 200px)' 
+      }}>
+        
+        {/* COLUNA 1: ALERTAS DE EMERGÊNCIA */}
+        <div style={{ overflowY: 'auto' }}>
           <h3 className="section-title" style={{ color: '#DC2626' }}>
             <AlertTriangle size={20} /> Alertas de Emergência ({alerts.length})
           </h3>
 
           {alerts.length === 0 && (
-             <div style={{ padding: '30px', textAlign: 'center', color: '#9CA3AF', border: '2px dashed #E5E7EB', borderRadius: '12px' }}>
-                <CheckCircle size={40} style={{ marginBottom: '10px', color: '#10B981', margin: '0 auto' }} />
+             <div style={{ padding: '40px 20px', textAlign: 'center', color: '#9CA3AF', border: '2px dashed #E5E7EB', borderRadius: '12px' }}>
+                <CheckCircle size={48} style={{ marginBottom: '16px', color: '#10B981', opacity: 0.5 }} />
                 <p>Nenhuma emergência ativa no momento.</p>
              </div>
           )}
@@ -83,7 +128,7 @@ const DashboardHome = () => {
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <div className="avatar-circle" style={{ backgroundColor: '#DC2626', color: '#FFF' }}>!</div>
                   <div>
-                    <h4 style={{ fontWeight: 'bold' }}>{alert.name}</h4>
+                    <h4 style={{ fontWeight: '700' }}>{alert.name}</h4>
                     <span className="status-badge badge-sos">SOS ATIVO</span>
                   </div>
                 </div>
@@ -92,74 +137,131 @@ const DashboardHome = () => {
                   <div style={{ color: '#9CA3AF', fontSize: '11px' }}>{alert.time}</div>
                 </div>
               </div>
-              
-              <div className="action-row">
-                <button className="btn btn-gray" onClick={() => alert(`GPS: ${JSON.stringify(alert.location)}`)}>
-                    <MapPin size={16} /> Ver Local
+              <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                <button 
+                  className="btn btn-green" 
+                  style={{ flex: 1, padding: '8px' }}
+                  onClick={() => handleResolveAlert(alert.id)}
+                >
+                    ATENDER OCORRÊNCIA
                 </button>
-                <button className="btn btn-green"><CheckCircle size={16} /> Atender</button>
+                <button 
+                  onClick={() => setMapPosition(alert.location)}
+                  style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E5E7EB', cursor: 'pointer' }}
+                >
+                  <MapPin size={20} color="#0891B2" />
+                </button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* COLUNA 2: RASTREAMENTO */}
-        <div>
+        {/* COLUNA 2: MAPA CENTRAL (VISUALIZADOR GEOGRÁFICO) */}
+        <div className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #E5E7EB', borderRadius: '16px' }}>
+          <MapContainer center={mapPosition} zoom={15} style={{ height: '100%', width: '100%' }}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <ChangeView center={mapPosition} />
+            {alerts.map(alert => (
+              <Marker key={alert.id} position={alert.location}>
+                <Popup>
+                  <div style={{ textAlign: 'center' }}>
+                    <strong>{alert.name}</strong> <br />
+                    Bateria: {alert.battery} <br />
+                    <button style={{ background: '#DC2626', color: 'white', padding: '6px 12px', borderRadius: '4px', border: 'none', marginTop: '8px', cursor: 'pointer' }}>
+                        Despachar Resgate
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+
+        {/* COLUNA 3: RASTREAMENTO ATIVO (ROTINA MONITORADA) */}
+        <div style={{ overflowY: 'auto' }}>
           <h3 className="section-title" style={{ color: '#005F73' }}>
-            <MapPin size={20} /> Rastreamento Ativo
+            <Activity size={20} /> Rastreamento Ativo
           </h3>
-          {/* Card Estático de Exemplo */}
-          <div className="user-card" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '16px' }}>
+          
+          <div className="user-card" style={{ padding: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div className="avatar-circle" style={{ backgroundColor: '#F3E8FF', color: '#6B21A8' }}>MS</div>
+                <div style={{ position: 'relative' }}>
+                  <div className="avatar-circle" style={{ backgroundColor: '#FEE2E2', color: '#111' }}>MS</div>
+                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', backgroundColor: '#10B981', borderRadius: '50%', border: '2px solid white' }}></div>
+                </div>
                 <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: '600' }}>Maria da Silva</h4>
+                  <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Maria da Silva</h4>
                   <div style={{ fontSize: '12px', color: '#6B7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Activity size={10} /> Monitoramento de Rotina
+                    <Activity size={12} color="#06B6D4" /> Visto há cerca de 16 horas
                   </div>
                 </div>
               </div>
-              <button style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#F0FDFA', color: '#0D9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <MapPin size={16} />
+              <button 
+                onClick={() => setMapPosition([-22.7300, -47.6400])}
+                style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#ECFEFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none' }}
+              >
+                <MapPin size={18} color="#0891B2" />
               </button>
             </div>
+          </div>
+
+          <div className="user-card" style={{ padding: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ position: 'relative' }}>
+                  <div className="avatar-circle" style={{ backgroundColor: '#CFFAFE', color: '#111' }}>JC</div>
+                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: '12px', height: '12px', backgroundColor: '#10B981', borderRadius: '50%', border: '2px solid white' }}></div>
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Joaquim Mario Soares</h4>
+                  <div style={{ fontSize: '12px', color: '#6B7280', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Activity size={12} color="#06B6D4" /> Visto há cerca de 2 horas
+                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={() => setMapPosition([-22.7348, -47.6476])}
+                style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#ECFEFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: 'none' }}
+              >
+                <MapPin size={18} color="#0891B2" />
+              </button>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   );
 };
 
-// --- LAYOUT SIDEBAR ---
+// --- ESTRUTURA DE NAVEGAÇÃO (LAYOUT MESTRE) ---
 function Layout() {
-  const [activeTab, setActiveTab] = useState('/');
   const menuItems = [
-    { path: '/', label: 'Central de Monitoramento', icon: <LayoutDashboard size={20} /> },
+    { path: '/', label: 'Monitoramento', icon: <LayoutDashboard size={20} /> },
     { path: '/pesquisas', label: 'Pesquisas', icon: <User size={20} /> },
     { path: '/bancos', label: 'Bancos', icon: <Settings size={20} /> },
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <aside style={{ width: '250px', backgroundColor: '#FFFFFF', borderRight: '1px solid #E5E7EB', position: 'fixed', height: '100%', zIndex: 10 }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid #F3F4F6' }}>
-          <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827' }}>Saúde Ciclo</h1>
-          <span style={{ fontSize: '12px', color: '#9CA3AF' }}>Enterprise Edition v2.4</span>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F9FAFB' }}>
+      <aside style={{ width: '250px', backgroundColor: '#FFFFFF', borderRight: '1px solid #E5E7EB', position: 'fixed', height: '100%', zIndex: 1000 }}>
+        <div style={{ padding: '24px', borderBottom: '1px solid #F3F4F6' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: '800', color: '#111827' }}>Saúde Ciclo</h1>
+          <span style={{ fontSize: '12px', color: '#9CA3AF' }}>v2.4 Enterprise</span>
         </div>
         <nav style={{ padding: '20px' }}>
           {menuItems.map((item) => (
-            <Link key={item.path} to={item.path} onClick={() => setActiveTab(item.path)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '8px', marginBottom: '5px',
-                backgroundColor: activeTab === item.path ? '#F3F4F6' : 'transparent',
-                color: activeTab === item.path ? '#111827' : '#6B7280',
-                fontWeight: activeTab === item.path ? '600' : '400'
-              }}>
+            <Link key={item.path} to={item.path} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', borderRadius: '10px', color: '#4B5563', textDecoration: 'none', marginBottom: '4px' }}>
               {item.icon} {item.label}
             </Link>
           ))}
         </nav>
       </aside>
-      <main style={{ flex: 1, marginLeft: '250px', padding: '30px' }}>
+      <main style={{ flex: 1, marginLeft: '250px', padding: '32px' }}>
         <Routes>
           <Route path="/" element={<DashboardHome />} />
         </Routes>
