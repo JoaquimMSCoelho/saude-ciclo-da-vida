@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // ARQUIVO: backend/src/emergency.controller.ts
-// OBJETIVO: Controller de Emergência Híbrido (Persistência RAM + Socket Real-Time)
+// OBJETIVO: Controller de Emergência Híbrido (RAM + Socket + Sincronia Global)
 // -------------------------------------------------------------------------
 
 import { Controller, Post, Get, Body, Patch, Param, HttpCode, HttpStatus } from '@nestjs/common';
@@ -15,6 +15,7 @@ interface Alert {
   batteryLevel: string | number;
   createdAt: string;
   resolved: boolean;
+  resolvedAt?: string; // Campo para relatório de auditoria
   user: {
     name: string;
     photoUrl: string;
@@ -39,8 +40,7 @@ export class EmergencyController {
     console.log('🚨 ALERTA SOS RECEBIDO (HTTP)');
     console.log(`👤 Usuário: ${data.userName || 'Desconhecido'}`);
 
-    // A. Criação do Objeto de Alerta (Logica do Data A)
-    // Se vier localização do celular, usa. Se não, usa fallback Piracicaba.
+    // A. Criação do Objeto de Alerta
     const newAlert: Alert = {
       id: Date.now().toString(),
       latitude: data.location?.latitude || -22.7348, 
@@ -50,16 +50,15 @@ export class EmergencyController {
       resolved: false,
       user: {
         name: data.userName || 'Paciente Monitorado',
-        photoUrl: 'https://ui-avatars.com/api/?background=random&name=' + (data.userName || 'User'),
-        chronicDiseases: 'Monitoramento Cardíaco'
+        photoUrl: `https://ui-avatars.com/api/?background=random&name=${data.userName || 'User'}`,
+        chronicDiseases: 'Monitoramento Ativo'
       }
     };
 
-    // B. Persistência em Memória (Data A)
+    // B. Persistência em Memória
     ALERTS_DB.unshift(newAlert);
 
-    // C. DISPARO REAL-TIME VIA SOCKET (Data B)
-    // Isso faz o card vermelho aparecer no Dashboard (5173)
+    // C. DISPARO REAL-TIME VIA SOCKET
     this.appGateway.server.emit('triggerSOS', {
         userId: newAlert.id,
         userName: newAlert.user.name,
@@ -73,7 +72,8 @@ export class EmergencyController {
 
     return { 
         status: 'RECEIVED', 
-        message: 'SOS processado, salvo e enviado para a Central.' 
+        message: 'SOS processado, salvo e enviado para a Central.',
+        alertId: newAlert.id 
     };
   }
 
@@ -83,15 +83,28 @@ export class EmergencyController {
     return ALERTS_DB;
   }
 
-  // --- 3. RESOLVER ALERTA (PATCH /sos/:id) ---
-  @Patch(':id')
+  // --- 3. RESOLUÇÃO DE CHAMADOS (PATCH /sos/:id/resolve) ---
+  @Patch(':id/resolve')
   resolveAlert(@Param('id') id: string) {
     const alertIndex = ALERTS_DB.findIndex(a => a.id === id);
+    
     if (alertIndex > -1) {
+      const now = new Date().toISOString();
       ALERTS_DB[alertIndex].resolved = true;
-      // Opcional: Avisar o painel que foi resolvido via socket também
-      this.appGateway.server.emit('update-alerts', ALERTS_DB);
+      ALERTS_DB[alertIndex].resolvedAt = now;
+
+      console.log(`✅ [SISTEMA] Ocorrência ${id} resolvida em ${now}`);
+
+      // GATILHO GLOBAL: Sincroniza todos os terminais para remover o card
+      this.appGateway.server.emit('alertResolved', { id });
+      
+      return { 
+        status: 'RESOLVED', 
+        resolvedAt: now,
+        message: 'Ocorrência encerrada com sucesso.'
+      };
     }
-    return { status: 'RESOLVED' };
+    
+    return { status: 'NOT_FOUND', message: 'Alerta não encontrado no banco volátil.' };
   }
 }

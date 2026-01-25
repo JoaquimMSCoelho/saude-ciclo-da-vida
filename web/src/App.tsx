@@ -73,14 +73,36 @@ const DashboardHome = () => {
       setMapPosition(newAlert.location);
     });
 
+    // 4. Ouvir Resolução Global (Sincronia entre terminais)
+    socketService.on('alertResolved', (data) => {
+      setAlerts(prev => prev.filter(alert => alert.id !== data.id));
+    });
+
     return () => {
       socketService.off('triggerSOS');
+      socketService.off('alertResolved');
     };
   }, []);
 
-  // FUNÇÃO DE RESOLUÇÃO: Remove o alerta da lista e do LocalStorage
-  const handleResolveAlert = (id: string) => {
-    setAlerts(prev => prev.filter(alert => alert.id !== id));
+  // FUNÇÃO DE RESOLUÇÃO: Comunica ao Backend e atualiza localmente
+  const handleResolveAlert = async (id: string) => {
+    try {
+      // 1. Avisa o Backend que estamos atendendo (PATCH)
+      const response = await fetch(`http://localhost:4000/sos/${id}/resolve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        // 2. Remove da tela local após confirmação
+        setAlerts(prev => prev.filter(alert => alert.id !== id));
+        console.log(`✔ Chamado ${id} encerrado oficialmente.`);
+      }
+    } catch (error) {
+      console.error("Erro ao resolver chamado no servidor:", error);
+      // Fallback: Remove localmente se o servidor estiver inacessível
+      setAlerts(prev => prev.filter(alert => alert.id !== id));
+    }
   };
 
   return (
