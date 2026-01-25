@@ -1,14 +1,18 @@
+// -------------------------------------------------------------------------
+// PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // ARQUIVO: backend/src/emergency.controller.ts
-// OBJETIVO: Controller de Emergência isolado na rota '/sos'
-// ---------------------------------------------------------
-import { Controller, Post, Get, Body, Patch, Param } from '@nestjs/common';
+// OBJETIVO: Controller de Emergência Híbrido (Persistência RAM + Socket Real-Time)
+// -------------------------------------------------------------------------
 
-// 1. DEFINIÇÃO DE TIPAGEM (Para evitar erros de "never")
+import { Controller, Post, Get, Body, Patch, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import { AppGateway } from './app.gateway'; // <--- CÉREBRO DO SOCKET
+
+// 1. DEFINIÇÃO DE TIPAGEM
 interface Alert {
   id: string;
   latitude: number;
   longitude: number;
-  batteryLevel: number;
+  batteryLevel: string | number;
   createdAt: string;
   resolved: boolean;
   user: {
@@ -19,53 +23,74 @@ interface Alert {
 }
 
 // 2. BANCO DE DADOS VOLÁTIL (Memória RAM)
-// Reinicia vazio toda vez que o servidor reinicia
 let ALERTS_DB: Alert[] = []; 
 
-// 3. MUDANÇA CRÍTICA: Rota definida como 'sos' para evitar conflitos com 'alerts'
 @Controller('sos') 
 export class EmergencyController {
+  
+  // INJEÇÃO DE DEPENDÊNCIA (Conecta o Controller ao Socket)
+  constructor(private readonly appGateway: AppGateway) {}
 
-  // RECEBER ALERTA (POST /sos)
+  // --- 1. RECEBER ALERTA E DISPARAR (POST /sos) ---
   @Post()
+  @HttpCode(HttpStatus.OK)
   async receiveAlert(@Body() data: any) {
     console.log('\n🚨 ------------------------------------------------ 🚨');
-    console.log('🚨 ALERTA SOS RECEBIDO NA NOVA ROTA (/sos)');
-    console.log(`👤 Usuário: ${data.userName}`);
-    console.log('🚨 ------------------------------------------------ 🚨\n');
-    
+    console.log('🚨 ALERTA SOS RECEBIDO (HTTP)');
+    console.log(`👤 Usuário: ${data.userName || 'Desconhecido'}`);
+
+    // A. Criação do Objeto de Alerta (Logica do Data A)
+    // Se vier localização do celular, usa. Se não, usa fallback Piracicaba.
     const newAlert: Alert = {
       id: Date.now().toString(),
-      latitude: -22.7348, // Localização Simulada (Piracicaba)
-      longitude: -47.6476,
-      batteryLevel: parseInt(data.battery) || 50,
+      latitude: data.location?.latitude || -22.7348, 
+      longitude: data.location?.longitude || -47.6476,
+      batteryLevel: data.battery || '50%',
       createdAt: new Date().toISOString(),
       resolved: false,
       user: {
-        name: data.userName || 'Paciente',
+        name: data.userName || 'Paciente Monitorado',
         photoUrl: 'https://ui-avatars.com/api/?background=random&name=' + (data.userName || 'User'),
-        chronicDiseases: 'Monitorado'
+        chronicDiseases: 'Monitoramento Cardíaco'
       }
     };
 
-    // Adiciona no topo da lista
+    // B. Persistência em Memória (Data A)
     ALERTS_DB.unshift(newAlert);
 
-    return { status: 'RECEIVED', message: 'Alerta processado na rota SOS' };
+    // C. DISPARO REAL-TIME VIA SOCKET (Data B)
+    // Isso faz o card vermelho aparecer no Dashboard (5173)
+    this.appGateway.server.emit('triggerSOS', {
+        userId: newAlert.id,
+        userName: newAlert.user.name,
+        location: { latitude: newAlert.latitude, longitude: newAlert.longitude },
+        battery: newAlert.batteryLevel,
+        timestamp: newAlert.createdAt
+    });
+
+    console.log('📡 [SOCKET] Alerta enviado para Dashboards conectados');
+    console.log('🚨 ------------------------------------------------ 🚨\n');
+
+    return { 
+        status: 'RECEIVED', 
+        message: 'SOS processado, salvo e enviado para a Central.' 
+    };
   }
 
-  // LISTAR ALERTAS (GET /sos)
+  // --- 2. LISTAR ALERTAS (GET /sos) ---
   @Get()
   getAllAlerts() {
     return ALERTS_DB;
   }
 
-  // RESOLVER ALERTA (PATCH /sos/:id)
+  // --- 3. RESOLVER ALERTA (PATCH /sos/:id) ---
   @Patch(':id')
   resolveAlert(@Param('id') id: string) {
     const alertIndex = ALERTS_DB.findIndex(a => a.id === id);
     if (alertIndex > -1) {
       ALERTS_DB[alertIndex].resolved = true;
+      // Opcional: Avisar o painel que foi resolvido via socket também
+      this.appGateway.server.emit('update-alerts', ALERTS_DB);
     }
     return { status: 'RESOLVED' };
   }

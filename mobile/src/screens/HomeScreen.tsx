@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // MÓDULO: TELA PRINCIPAL (HOME)
-// VERSÃO: DOCK TRIPLO (Localização | Chat | SOS) - 60x60px Simétrico
+// VERSÃO: DOCK FINAL (Altura Ajustada + Cores Forçadas)
 // -------------------------------------------------------------------------
 
 import React, { useEffect } from 'react';
@@ -9,10 +9,11 @@ import {
   View, Text, TouchableOpacity, Image, StatusBar, 
   ScrollView, Alert, StyleSheet, Platform 
 } from 'react-native';
-import { Pill, Apple, CalendarDays, Activity, MessageCircle, AlertTriangle, MapPin } from 'lucide-react-native';
+// Ícone do Chat e Mapa
+import { Pill, Apple, CalendarDays, Activity, MessageCircle, MapPin } from 'lucide-react-native';
 
 import LogoutButton from '../components/LogoutButton'; 
-import { styles as globalStyles, COLORS } from '../styles/global';
+import { styles as globalStyles } from '../styles/global';
 import { StorageService } from '../services/storage';
 import { LocationService } from '../services/LocationService';
 
@@ -37,7 +38,6 @@ export default function HomeScreen({ route, navigation }: any) {
 
       const performTracking = async () => {
         const location = await LocationService.getCurrentPosition();
-        
         if (location && user.id) {
             await LocationService.sendLocationLog(
                 user.id, 
@@ -58,7 +58,6 @@ export default function HomeScreen({ route, navigation }: any) {
           email: user.email || 'user@email.com',
           id: user.id
         });
-        
         if (token) await StorageService.saveToken(token);
       }
     };
@@ -92,6 +91,7 @@ export default function HomeScreen({ route, navigation }: any) {
     <View style={globalStyles.container}>
       <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       
+      {/* CABEÇALHO */}
       <View style={styles.headerTop}>
         <View style={{ flex: 1, marginRight: 10 }}> 
           <Text style={styles.welcomeLabel}>Bem-vindo(a),</Text>
@@ -102,8 +102,8 @@ export default function HomeScreen({ route, navigation }: any) {
         </View>
       </View>
 
+      {/* CONTEÚDO */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         <View style={styles.brandingContainer}>
           <Image 
             source={require('../../assets/LogoApp.png')} 
@@ -127,33 +127,37 @@ export default function HomeScreen({ route, navigation }: any) {
             </TouchableOpacity>
           ))}
         </View>
-
       </ScrollView>
 
+      {/* --- DOCK TRIPLO (AGORA MAIS ALTO E CORRIGIDO) --- */}
       <View style={styles.navigationDock}>
         
+        {/* 1. LOCALIZAÇÃO (Cinza Escuro) */}
         <TouchableOpacity 
           style={[styles.dockButton, { backgroundColor: '#374151' }]}
-          onPress={() => Alert.alert('Localização', 'Visualização de Mapa em Breve')}
+          onPress={() => Alert.alert('Localização', 'Mapa em Breve')}
           activeOpacity={0.8}
         >
-          <MapPin color="#FFF" size={28} />
+          <MapPin color="#FFF" size={24} />
         </TouchableOpacity>
 
+        {/* 2. CHAT (Azul FORÇADO) */}
         <TouchableOpacity 
-          style={[styles.dockButton, { backgroundColor: COLORS.primary }]}
+          style={[styles.dockButton, { backgroundColor: '#2563EB' }]} 
           onPress={() => navigation.navigate('Chat', { user, token })}
           activeOpacity={0.8}
         >
-          <MessageCircle color="#FFF" size={28} />
+          <MessageCircle color="#FFF" size={24} />
         </TouchableOpacity>
 
+        {/* 3. SOS (Vermelho com TEXTO) */}
         <TouchableOpacity 
-          style={[styles.dockButton, { backgroundColor: COLORS.danger }]}
+          style={[styles.dockButton, { backgroundColor: '#DC2626' }]}
           onPress={() => navigation.navigate('Panic', { user, token })}
           activeOpacity={0.8}
         >
-          <AlertTriangle color="#FFF" size={28} />
+          {/* AQUI ESTÁ A CORREÇÃO: TEXTO EM VEZ DE ÍCONE */}
+          <Text style={styles.sosDockText}>SOS</Text>
         </TouchableOpacity>
 
       </View>
@@ -206,27 +210,36 @@ const styles = StyleSheet.create({
   iconContainer: { marginBottom: 10, padding: 10, backgroundColor: '#f3f4f6', borderRadius: 50 },
   cardTitle: { fontSize: 12, fontWeight: 'bold', color: '#1f2937', textAlign: 'center', letterSpacing: 0.5 },
   
+  // --- CONFIGURAÇÃO DO DOCK ---
   navigationDock: {
     position: 'absolute',
-    bottom: 30, 
-    left: 30,
-    right: 30,
+    // AUMENTAMOS PARA 80px (Isso vai forçar a subida visual)
+    bottom: 80, 
+    width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between', 
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 25, // Espaçamento entre as bolas
     height: 70, 
+    zIndex: 999, // Força ficar por cima de tudo
   },
   
   dockButton: {
     width: 60,
     height: 60,
-    borderRadius: 30, 
+    borderRadius: 30, // CÍRCULO PERFEITO
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8, 
+    elevation: 10, 
     shadowColor: '#000', 
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
+  },
+
+  sosDockText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16, // Tamanho calibrado
   }
 });

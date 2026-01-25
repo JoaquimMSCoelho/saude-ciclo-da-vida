@@ -1,12 +1,17 @@
+// -------------------------------------------------------------------------
 // ARQUIVO: backend/src/app.module.ts
 // OBJETIVO: Módulo Raiz (Orquestrador Global)
-// STATUS: INFRAESTRUTURA HÍBRIDA (Prisma + TypeORM SQLite)
+// STATUS: INFRAESTRUTURA HÍBRIDA (Prisma + TypeORM SQLite + Socket.IO)
+// -------------------------------------------------------------------------
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm'; // <--- IMPORTAÇÃO CRÍTICA PARA O MÓDULO 6
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
+
+// --- NOVO: CÉREBRO DE REAL-TIME ---
+import { AppGateway } from './app.gateway'; // <--- OBRIGATÓRIO: Gateway do Socket
 
 // --- MÓDULOS DE NEGÓCIO ---
 import { UsersModule } from './users/users.module';
@@ -39,7 +44,7 @@ import * as nodemailer from 'nodemailer';
     AuthModule,
     AlertsModule,
     LocationModule, // Rastreamento
-    ChatModule,     // WebSockets
+    ChatModule,     // WebSockets (Salas e Mensagens)
 
     // 3. Configuração do Carteiro (E-mail Service)
     MailerModule.forRootAsync({
@@ -70,7 +75,8 @@ import * as nodemailer from 'nodemailer';
   ],
   providers: [
     AppService, 
-    PrismaService // Mantido globalmente para compatibilidade com Auth/Users
+    PrismaService, // Mantido globalmente para compatibilidade com Auth/Users
+    AppGateway     // <--- AQUI ESTÁ A MÁGICA: Registra o Socket para funcionar
   ],
 })
 export class AppModule {}
