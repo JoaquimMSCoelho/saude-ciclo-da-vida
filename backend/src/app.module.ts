@@ -1,8 +1,9 @@
 // ARQUIVO: backend/src/app.module.ts
 // OBJETIVO: Módulo Raiz (Orquestrador Global)
-// STATUS: FUSÃO COMPLETA (Auth + Pânico + Alertas + E-mail)
+// STATUS: INFRAESTRUTURA HÍBRIDA (Prisma + TypeORM SQLite)
 
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm'; // <--- IMPORTAÇÃO CRÍTICA PARA O MÓDULO 6
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
@@ -11,9 +12,11 @@ import { PrismaService } from './prisma.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { AlertsModule } from './alerts/alerts.module';
+import { LocationModule } from './location/location.module'; // Módulo 6 (GPS)
+import { ChatModule } from './chat/chat.module';             // Módulo 2 (Chat SOS)
 
 // --- CONTROLLERS ---
-import { EmergencyController } from './emergency.controller'; // O Botão de Pânico
+import { EmergencyController } from './emergency.controller';
 
 // --- INFRAESTRUTURA DE E-MAIL ---
 import { MailerModule } from '@nestjs-modules/mailer';
@@ -21,21 +24,32 @@ import * as nodemailer from 'nodemailer';
 
 @Module({
   imports: [
-    // 1. Módulos do Sistema (Legado + Atual)
+    // 1. CONFIGURAÇÃO DE BANCO DE DADOS (TYPEORM - EXCLUSIVO PARA GPS)
+    // Cria um arquivo 'location_data.db' na raiz para armazenar logs de rastreio.
+    // Isso roda em paralelo ao Prisma, sem gerar conflitos.
+    TypeOrmModule.forRoot({
+      type: 'sqlite',
+      database: 'location_data.db',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true, // Cria tabelas automaticamente (apenas em dev)
+    }),
+
+    // 2. Módulos Funcionais do Sistema
     UsersModule,
     AuthModule,
-    AlertsModule, // Mantido para não quebrar o sistema de notificações
+    AlertsModule,
+    LocationModule, // Rastreamento
+    ChatModule,     // WebSockets
 
-    // 2. Configuração do Carteiro (Ethereal / Nodemailer)
+    // 3. Configuração do Carteiro (E-mail Service)
     MailerModule.forRootAsync({
       useFactory: async () => {
-        // Cria uma conta de teste fake no Ethereal na hora (Zero Config)
+        // Cria conta de teste no Ethereal (Ambiente de Dev)
         const account = await nodemailer.createTestAccount();
         
         console.log('--------------------------------------------------');
-        console.log('📧 SERVIÇO DE E-MAIL INICIADO (Modo Teste)');
-        console.log(`👤 Usuário: ${account.user}`);
-        console.log(`🔑 Senha:   ${account.pass}`);
+        console.log('📧 SERVIÇO DE E-MAIL (TEST MODE)');
+        console.log(`👤 User: ${account.user}`);
         console.log('--------------------------------------------------');
         
         return {
@@ -43,25 +57,20 @@ import * as nodemailer from 'nodemailer';
             host: account.smtp.host,
             port: account.smtp.port,
             secure: account.smtp.secure,
-            auth: {
-              user: account.user,
-              pass: account.pass,
-            },
+            auth: { user: account.user, pass: account.pass },
           },
-          defaults: {
-            from: '"Saúde Ciclo da Vida" <noreply@saudeciclodavida.com>',
-          },
+          defaults: { from: '"Saúde Ciclo da Vida" <noreply@saudeciclodavida.com>' },
         };
       },
     }),
   ],
   controllers: [
-    AppController,
-    EmergencyController // Mantido: A rota do Botão SOS
+    AppController, 
+    EmergencyController
   ],
   providers: [
-    AppService,
-    PrismaService // Injetado globalmente para garantir acesso ao DB
+    AppService, 
+    PrismaService // Mantido globalmente para compatibilidade com Auth/Users
   ],
 })
 export class AppModule {}
