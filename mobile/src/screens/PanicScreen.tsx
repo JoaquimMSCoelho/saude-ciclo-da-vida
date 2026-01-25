@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
-// ARQUIVO: mobile/src/screens/PanicScreen.tsx
-// TIPO: TELA DE EMERGÊNCIA (FINAL ENTERPRISE + UPGRADE EMOCIONAL)
-// ATUALIZAÇÃO: Fusão Haptics + Narrativa Afetiva (Mantendo 100% do Visual)
+// PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
+// MÓDULO: TELA DE EMERGÊNCIA
+// VERSÃO: FUSÃO FINAL (Visual Rico + Correção de Vibração Prioritária)
 // -------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
@@ -14,20 +14,17 @@ import {
   Alert, 
   Vibration 
 } from 'react-native';
-import * as Haptics from 'expo-haptics'; // Injeção: Interatividade Sensorial
-
-// Ícones Técnicos
+import * as Haptics from 'expo-haptics'; 
 import { MapPin, Phone, XCircle, Siren, Heart, Signal } from 'lucide-react-native'; 
 import { styles as globalStyles } from '../styles/global';
-import api from '../services/api'; // Importação da API configurada
+import api from '../services/api'; 
 
 export default function PanicScreen({ navigation, route }: any) {
   const { user } = route.params || { user: { name: 'Usuário' } };
   const [status, setStatus] = useState('AGUARDANDO AÇÃO');
 
-  // Efeito de Entrada (Vibração de Alerta)
   useEffect(() => {
-    // Padrão de vibração: espera 0ms, vibra 500ms, pausa 200ms, vibra 500ms
+    // Vibração de entrada: alerta sensorial ao abrir a tela
     Vibration.vibrate([0, 500, 200, 500]); 
   }, []);
 
@@ -39,25 +36,30 @@ export default function PanicScreen({ navigation, route }: any) {
   };
 
   const handleSOSAction = async () => {
-    // INJEÇÃO: Resposta sensorial imediata (Toque que deixa memória)
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    // --- CORREÇÃO DE PRIORIDADE: FÍSICO PRIMEIRO ---
+    // O comando de vibração executa antes de qualquer lógica de React ou Rede.
+    Vibration.vibrate(1000); 
 
-    // INJEÇÃO: Narrativa em vez de técnica (Conforme Guia de Mídia Social)
+    // Feedback tátil secundário
+    try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } catch (e) {
+        // Ignora erro de Haptics em dispositivos não compatíveis
+    }
+
     setStatus('CONECTANDO PROTEÇÃO...'); 
-    Vibration.vibrate(1000); // Vibração longa de confirmação tátil
 
     try {
-      // --- MUDANÇA CRÍTICA: ROTA '/sos' (Porta 4000) ---
       await api.post('/sos', {
         userName: user.name,
-        location: '-22.7348, -47.6476 (Piracicaba/SP)', // Simulado
+        location: '-22.7348, -47.6476 (Piracicaba/SP)', // Simulado ou vindo do LocationService
         bpm: '82',
         battery: '85',
         connection: '4G LTE'
       });
 
-      // Sucesso
-      setStatus('PROTEÇÃO ATIVADA!'); // Narrativa Final Afetiva
+      setStatus('PROTEÇÃO ATIVADA!'); 
+      
       Alert.alert(
         'SOCORRO SOLICITADO', 
         'A Central de Monitoramento confirmou o recebimento do seu alerta.',
@@ -67,6 +69,7 @@ export default function PanicScreen({ navigation, route }: any) {
     } catch (error) {
       console.log('❌ ERRO AO ENVIAR SOS:', error);
       setStatus('ERRO NO ENVIO');
+      
       Alert.alert(
         'FALHA DE CONEXÃO', 
         'Não foi possível contatar a central automaticamente. Ligue para 192.',
@@ -77,10 +80,8 @@ export default function PanicScreen({ navigation, route }: any) {
 
   return (
     <View style={globalStyles.container}>
-      {/* Status Bar Vermelha (Alerta) */}
       <StatusBar backgroundColor="#dc2626" barStyle="light-content" />
 
-      {/* 1. CABEÇALHO (Sirene + Título) */}
       <View style={styles.header}>
         <View style={styles.headerIconArea}>
            <Siren size={32} color="#dc2626" />
@@ -89,10 +90,8 @@ export default function PanicScreen({ navigation, route }: any) {
         <Text style={styles.subtitle}>O sistema está monitorando você</Text>
       </View>
 
-      {/* 2. TELEMETRIA (Dados Vitais) */}
       <View style={styles.telemetryContainer}>
         
-        {/* Bloco Cardíaco */}
         <View style={styles.telemetryBox}>
             <Text style={styles.telemetryLabel}>BATIMENTOS</Text>
             <View style={styles.telemetryValueRow}>
@@ -102,7 +101,6 @@ export default function PanicScreen({ navigation, route }: any) {
             </View>
         </View>
 
-        {/* Bloco Conexão */}
         <View style={[styles.telemetryBox, { borderLeftWidth: 1, borderLeftColor: '#e5e7eb' }]}>
             <Text style={styles.telemetryLabel}>CONEXÃO</Text>
             <View style={styles.telemetryValueRow}>
@@ -114,7 +112,6 @@ export default function PanicScreen({ navigation, route }: any) {
 
       </View>
 
-      {/* 3. BOTÃO GIGANTE (Ação Principal) */}
       <View style={styles.centerArea}>
         <TouchableOpacity 
           style={styles.sosBigButton} 
@@ -126,11 +123,9 @@ export default function PanicScreen({ navigation, route }: any) {
             <Text style={styles.pushText}>PRESSIONE</Text>
           </View>
         </TouchableOpacity>
-        {/* Feedback visual do status abaixo do botão */}
         <Text style={styles.statusText}>{status}</Text>
       </View>
 
-      {/* 4. DADOS DE LOGÍSTICA (Local + Contato) */}
       <View style={styles.infoContainer}>
         <View style={styles.infoRow}>
           <MapPin size={20} color="#6b7280" />
@@ -142,7 +137,6 @@ export default function PanicScreen({ navigation, route }: any) {
         </View>
       </View>
 
-      {/* 5. RODAPÉ (Cancelar) */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
           <XCircle size={24} color="#dc2626" style={{ marginRight: 10 }} />
@@ -157,7 +151,7 @@ export default function PanicScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
-    marginTop: 50, // Safe Area
+    marginTop: 50,
     marginBottom: 20,
   },
   headerIconArea: {
@@ -176,14 +170,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7280',
   },
-  
-  // --- ÁREA DE TELEMETRIA ---
   telemetryContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 30,
     marginHorizontal: 40,
-    backgroundColor: '#f9fafb', // Fundo cinza bem claro
+    backgroundColor: '#f9fafb', 
     borderRadius: 16,
     padding: 10,
     borderWidth: 1,
@@ -218,8 +210,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     marginBottom: 4,
   },
-  // -------------------------
-
   centerArea: {
     alignItems: 'center',
     justifyContent: 'center',
