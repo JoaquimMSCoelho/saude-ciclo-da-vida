@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // ARQUIVO: backend/src/emergency.controller.ts
-// OBJETIVO: Controller de Emergência Híbrido (RAM + Socket + Sincronia Global)
+// OBJETIVO: Controller de Emergência Híbrido (RAM + Socket + Auditoria de Histórico)
 // -------------------------------------------------------------------------
 
 import { Controller, Post, Get, Body, Patch, Param, HttpCode, HttpStatus } from '@nestjs/common';
@@ -77,13 +77,23 @@ export class EmergencyController {
     };
   }
 
-  // --- 2. LISTAR ALERTAS (GET /sos) ---
+  // --- 2. LISTAR ALERTAS ATIVOS (GET /sos) ---
   @Get()
   getAllAlerts() {
     return ALERTS_DB;
   }
 
-  // --- 3. RESOLUÇÃO DE CHAMADOS (PATCH /sos/:id/resolve) ---
+  // --- 3. AUDITORIA: LISTAR HISTÓRICO DE ATENDIMENTOS (GET /sos/history) ---
+  @Get('history')
+  getHistory() {
+    // Retorna os últimos 10 atendimentos realizados, ordenados pelo mais recente
+    return ALERTS_DB
+      .filter(a => a.resolved === true)
+      .sort((a, b) => new Date(b.resolvedAt!).getTime() - new Date(a.resolvedAt!).getTime())
+      .slice(0, 10);
+  }
+
+  // --- 4. RESOLUÇÃO DE CHAMADOS (PATCH /sos/:id/resolve) ---
   @Patch(':id/resolve')
   resolveAlert(@Param('id') id: string) {
     const alertIndex = ALERTS_DB.findIndex(a => a.id === id);
