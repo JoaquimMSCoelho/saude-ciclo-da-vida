@@ -1,14 +1,14 @@
 // -------------------------------------------------------------------------
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // ARQUIVO: E:\Projetos\SaudeCicloDaVida\web\src\App.tsx
-// OBJETIVO: LAYOUT TRIPLO INTEGRADO COM MÓDULO DE AUDITORIA (HISTÓRICO)
+// OBJETIVO: LAYOUT TRIPLO COM ZOOM INTELIGENTE, GOOGLE MAPS E AUDITORIA
 // -------------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, MapPin, AlertTriangle, Settings, 
-  CheckCircle, Activity, User, Wifi, WifiOff, Clock 
+  CheckCircle, Activity, User, Wifi, WifiOff, Clock, ExternalLink
 } from 'lucide-react';
 
 // --- INFRAESTRUTURA GEOGRÁFICA ---
@@ -27,29 +27,34 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-function ChangeView({ center }: { center: [number, number] }) {
+// Sub-componente com Zoom Dinâmico Aprimorado
+function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, 15);
-  }, [center, map]);
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
   return null;
 }
 
 const DashboardHome = () => {
-  // PERSISTÊNCIA: Alertas Ativos
+  // PERSISTÊNCIA: Alertas Ativos e Histórico
   const [alerts, setAlerts] = useState<any[]>(() => {
     const saved = localStorage.getItem('@SaudeCiclo:alerts');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // PERSISTÊNCIA: Histórico de Auditoria
   const [history, setHistory] = useState<any[]>(() => {
     const saved = localStorage.getItem('@SaudeCiclo:history');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [connectionStatus, setConnectionStatus] = useState(false);
-  const [mapPosition, setMapPosition] = useState<[number, number]>([-22.7348, -47.6476]);
+  
+  // Controle de posição e zoom dinâmico (Substitui mapPosition fixo)
+  const [mapState, setMapState] = useState({
+    position: [-22.7348, -47.6476] as [number, number],
+    zoom: 15
+  });
 
   // Sincronização de Persistência Local
   useEffect(() => {
@@ -68,11 +73,11 @@ const DashboardHome = () => {
         name: data.userName || `Usuário ${data.userId?.substring(0,4)}`, 
         battery: data.battery || '??%',
         time: new Date().toLocaleTimeString('pt-BR'),
-        fullTimestamp: new Date().toISOString(), // Base para cálculo de SLA
+        fullTimestamp: new Date().toISOString(),
         location: [data.location?.latitude || -22.7348, data.location?.longitude || -47.6476] as [number, number]
       };
       setAlerts(prev => [newAlert, ...prev]);
-      setMapPosition(newAlert.location);
+      setMapState({ position: newAlert.location, zoom: 18 }); // Zoom automático no SOS
     });
 
     socketService.on('alertResolved', (data) => {
@@ -84,6 +89,11 @@ const DashboardHome = () => {
       socketService.off('alertResolved');
     };
   }, []);
+
+  // Lógica de Redirecionamento Google Maps
+  const openGoogleMaps = (lat: number, lng: number) => {
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+  };
 
   // Lógica de Cálculo de Resposta (Auditoria)
   const calculateSLA = (startTime: string) => {
@@ -118,7 +128,7 @@ const DashboardHome = () => {
             slaColor: sla.color,
             slaBg: sla.bg
           };
-          setHistory(prev => [newEntry, ...prev].slice(0, 10)); // Mantém os últimos 10
+          setHistory(prev => [newEntry, ...prev].slice(0, 10));
         }
         setAlerts(prev => prev.filter(alert => alert.id !== id));
       }
@@ -137,7 +147,7 @@ const DashboardHome = () => {
           <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', textTransform: 'uppercase' }}>
             CENTRAL DE MONITORAMENTO
           </h2>
-          <p style={{ color: '#6B7280', fontSize: '14px' }}>Enterprise Edition • v2.5 (Audit Module)</p>
+          <p style={{ color: '#6B7280', fontSize: '14px' }}>Enterprise Edition • v2.6 (Audit & Maps)</p>
         </div>
         
         <div className={`status-pill ${connectionStatus ? '' : 'offline'}`}>
@@ -151,7 +161,7 @@ const DashboardHome = () => {
         display: 'grid', 
         gridTemplateColumns: '380px 1fr 380px', 
         gap: '24px', 
-        height: '500px' // Altura fixa para o monitoramento superior
+        height: '500px' 
       }}>
         
         {/* COLUNA 1: EMERGÊNCIAS */}
@@ -186,7 +196,7 @@ const DashboardHome = () => {
                 <button className="btn btn-green" style={{ flex: 1, padding: '8px' }} onClick={() => handleResolveAlert(alert.id)}>
                     ATENDER OCORRÊNCIA
                 </button>
-                <button onClick={() => setMapPosition(alert.location)} style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E5E7EB', cursor: 'pointer' }}>
+                <button onClick={() => setMapState({ position: alert.location, zoom: 19 })} style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #E5E7EB', cursor: 'pointer' }}>
                   <MapPin size={20} color="#0891B2" />
                 </button>
               </div>
@@ -194,30 +204,49 @@ const DashboardHome = () => {
           ))}
         </div>
 
-        {/* COLUNA 2: MAPA CENTRAL */}
+        {/* COLUNA 2: MAPA COM ZOOM MÁXIMO E LINK GOOGLE */}
         <div className="card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #E5E7EB', borderRadius: '16px' }}>
-          <MapContainer center={mapPosition} zoom={15} style={{ height: '100%', width: '100%' }}>
+          <MapContainer center={mapState.position} zoom={mapState.zoom} style={{ height: '100%', width: '100%' }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <ChangeView center={mapPosition} />
+            <ChangeView center={mapState.position} zoom={mapState.zoom} />
             {alerts.map(alert => (
-              <Marker key={alert.id} position={alert.location}><Popup><b>{alert.name}</b></Popup></Marker>
+              <Marker 
+                key={alert.id} 
+                position={alert.location}
+                eventHandlers={{ click: () => setMapState({ position: alert.location, zoom: 19 }) }}
+              >
+                <Popup>
+                  <div style={{ textAlign: 'center', padding: '5px' }}>
+                    <strong style={{ fontSize: '14px' }}>{alert.name}</strong><br/>
+                    <button 
+                      onClick={() => openGoogleMaps(alert.location[0], alert.location[1])}
+                      style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '5px', background: '#4285F4', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                    >
+                      <ExternalLink size={14} /> Abrir no Google Maps
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
             ))}
           </MapContainer>
         </div>
 
-        {/* COLUNA 3: RASTREAMENTO */}
+        {/* COLUNA 3: RASTREAMENTO COM BOTÃO DE LOCALIZAÇÃO ATIVO */}
         <div style={{ overflowY: 'auto' }}>
           <h3 className="section-title" style={{ color: '#005F73' }}><Activity size={20} /> Rastreamento Ativo</h3>
           <div className="user-card" style={{ padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div className="avatar-circle" style={{ backgroundColor: '#FEE2E2', color: '#111' }}>MS</div>
+                <div className="avatar-circle" style={{ backgroundColor: '#CFFAFE', color: '#111' }}>JC</div>
                 <div>
-                  <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Maria da Silva</h4>
-                  <div style={{ fontSize: '12px', color: '#6B7280' }}>Monitoramento de Rotina</div>
+                  <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Joaquim Mario Soares</h4>
+                  <div style={{ fontSize: '12px', color: '#6B7280' }}>Monitorando Pai</div>
                 </div>
               </div>
-              <button onClick={() => setMapPosition([-22.7300, -47.6400])} style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#ECFEFF', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+              <button 
+                onClick={() => setMapState({ position: [-22.7348, -47.6476], zoom: 19 })} 
+                style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#ECFEFF', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
                 <MapPin size={18} color="#0891B2" />
               </button>
             </div>
@@ -225,7 +254,7 @@ const DashboardHome = () => {
         </div>
       </div>
 
-      {/* --- SEÇÃO DE HISTÓRICO DE ATENDIMENTO (ABAIXO DO GRID) --- */}
+      {/* --- SEÇÃO DE HISTÓRICO DE AUDITORIA --- */}
       <div className="card" style={{ padding: '24px', border: '1px solid #E5E7EB', borderRadius: '16px' }}>
         <h3 className="section-title" style={{ color: '#374151', marginBottom: '15px' }}>
           <Clock size={20} color="#6B7280" /> Histórico de Atendimentos Recentes
@@ -241,9 +270,7 @@ const DashboardHome = () => {
           </thead>
           <tbody>
             {history.length === 0 ? (
-              <tr>
-                <td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: '#9CA3AF' }}>Nenhum atendimento registrado nesta sessão.</td>
-              </tr>
+              <tr><td colSpan={4} style={{ textAlign: 'center', padding: '24px', color: '#9CA3AF' }}>Nenhum histórico registrado.</td></tr>
             ) : (
               history.map((item) => (
                 <tr key={item.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
@@ -251,15 +278,7 @@ const DashboardHome = () => {
                   <td style={{ padding: '12px' }}>{item.resolvedAt}</td>
                   <td style={{ padding: '12px' }}>{item.slaText}</td>
                   <td style={{ padding: '12px' }}>
-                    <span style={{ 
-                      color: item.slaColor, 
-                      backgroundColor: item.slaBg, 
-                      padding: '4px 10px', 
-                      borderRadius: '12px', 
-                      fontSize: '11px', 
-                      fontWeight: '800',
-                      textTransform: 'uppercase'
-                    }}>
+                    <span style={{ color: item.slaColor, backgroundColor: item.slaBg, padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}>
                       {item.slaLabel}
                     </span>
                   </td>
@@ -286,7 +305,7 @@ function Layout() {
       <aside style={{ width: '250px', backgroundColor: '#FFFFFF', borderRight: '1px solid #E5E7EB', position: 'fixed', height: '100%', zIndex: 1000 }}>
         <div style={{ padding: '24px', borderBottom: '1px solid #F3F4F6' }}>
           <h1 style={{ fontSize: '20px', fontWeight: '800', color: '#111827' }}>Saúde Ciclo</h1>
-          <span style={{ fontSize: '12px', color: '#9CA3AF' }}>v2.5 Enterprise</span>
+          <span style={{ fontSize: '12px', color: '#9CA3AF' }}>v2.6 Enterprise</span>
         </div>
         <nav style={{ padding: '20px' }}>
           {menuItems.map((item) => (
