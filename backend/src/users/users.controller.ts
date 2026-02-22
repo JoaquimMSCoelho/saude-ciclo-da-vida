@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------
 MÓDULO: USERS CONTROLLER
 DESCRIÇÃO: Interface REST para perfil, localização e farmácia.
-STATUS: CORRIGIDO (Rota de Listagem PÚBLICA para evitar erro 401)
+STATUS: ATUALIZADO (Sincronizado com o esquema de rastreamento dinâmico)
 -------------------------------------------------------------------------
 */
 import { Controller, Get, Body, Param, UseGuards, Patch, Request } from '@nestjs/common';
@@ -24,11 +24,13 @@ export class UsersController {
 
   // ===========================================================================
   // ROTA 2: ATUALIZAR LOCALIZAÇÃO (Protegido - Celular envia)
+  // AJUSTE: Mapeado para receber lat/lng do corpo da requisição via Token
   // ===========================================================================
   @UseGuards(JwtAuthGuard)
   @Patch('location')
   async updateLocation(@Request() req, @Body() body: { lat: number; lng: number }) {
-    console.log(`📍 Rastreamento recebido de [${req.user.userId}]: ${body.lat}, ${body.lng}`);
+    // Log de auditoria no terminal para validação do Arquiteto
+    console.log(`📍 Rastreamento recebido de [ID: ${req.user.userId}]: Lat ${body.lat}, Lng ${body.lng}`);
     return this.usersService.updateLocation(req.user.userId, body.lat, body.lng);
   }
 
@@ -52,7 +54,6 @@ export class UsersController {
 
   // ===========================================================================
   // ROTA 5: LISTAR TODOS (PÚBLICO)
-  // Correção Técnica: Removemos o @UseGuards aqui para o Dashboard acessar.
   // ===========================================================================
   @Get() 
   findAll() {

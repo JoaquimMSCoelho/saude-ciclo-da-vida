@@ -2,7 +2,7 @@
 // PROJETO: SAÚDE CICLO DA VIDA (ENTERPRISE EDITION)
 // ARQUITETURA: DATA LAYER (PostgreSQL + Prisma ORM)
 // GOVERNANÇA: PGT-01 (NORMA EXTREMO ZERO)
-// STATUS: ATUALIZADO (Com Modo Guardião / GPS Ativo)
+// STATUS: ATUALIZADO (Com Auditoria LGPD / Access Logs)
 // -------------------------------------------------------------------------
 
 generator client {
@@ -26,17 +26,16 @@ enum UserRole {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String   // Senha hash
-  name      String?
-  photoUrl  String?  // Foto do perfil
-  role      UserRole @default(PACIENTE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String   // Senha hash
+  name          String?
+  photoUrl      String?  // Foto do perfil
+  role          UserRole @default(PACIENTE)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // --- GEOLOCALIZAÇÃO ATIVA (MODO GUARDIÃO) ---
-  // Campos novos para rastreamento passivo (sem botão de pânico)
   lastLatitude  Float?
   lastLongitude Float?
   lastSeenAt    DateTime? // Data/Hora da última posição recebida
@@ -49,6 +48,9 @@ model User {
   appointments       Appointment[]         // Suas consultas
   personalEvents     PersonalEvent[]       // Sua agenda pessoal (festas, etc)
   carePlans          CarePlan[]            // Seus planos de dieta/treino
+
+  // --- INJEÇÃO TÉCNICA: RELAÇÃO DE AUDITORIA (LGPD) ---
+  auditLogs          AuditLog[]            @relation("UserActions")
 
   // SISTEMA DE CUIDADORES (MULTI-TENANT)
   // Quem eu cuido? (Eu sou o cuidador)
@@ -80,17 +82,17 @@ model PatientProfile {
 
 // Tabela de ligação "Muitos para Muitos" com permissões
 model CareRelationship {
-  id             String   @id @default(uuid())
+  id              String   @id @default(uuid())
   
-  caregiverId    String   // Quem cuida (Filha)
-  caregiver      User     @relation("CaregiverRelation", fields: [caregiverId], references: [id])
+  caregiverId     String   // Quem cuida (Filha)
+  caregiver       User     @relation("CaregiverRelation", fields: [caregiverId], references: [id])
   
-  patientId      String   // Quem é cuidado (Pai)
-  patient        User     @relation("PatientRelation", fields: [patientId], references: [id])
+  patientId       String   // Quem é cuidado (Pai)
+  patient         User     @relation("PatientRelation", fields: [patientId], references: [id])
   
-  permissions    Json     // O que pode ver? { "canViewGPS": true, "canEditMeds": false }
-  status         String   @default("ACTIVE") // ACTIVE, PENDING, BLOCKED
-  createdAt      DateTime @default(now())
+  permissions     Json     // O que pode ver? { "canViewGPS": true, "canEditMeds": false }
+  status          String   @default("ACTIVE") // ACTIVE, PENDING, BLOCKED
+  createdAt       DateTime @default(now())
 
   @@unique([caregiverId, patientId]) // Evita duplicidade de vínculo
 }
@@ -106,26 +108,26 @@ model PairingToken {
 }
 
 model EmergencyContact {
-  id             String   @id @default(uuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  name           String
-  phone          String   // WhatsApp
-  relationship   String   // Grau de parentesco (Filho, Vizinho)
-  priority       Int      @default(1) // 1 = Avisar primeiro
+  name            String
+  phone           String   // WhatsApp
+  relationship    String   // Grau de parentesco (Filho, Vizinho)
+  priority        Int      @default(1) // 1 = Avisar primeiro
 }
 
 model PanicAlert {
-  id             String   @id @default(uuid())
-  userId         String
-  user           User     @relation(fields: [userId], references: [id])
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
   
-  latitude       Float
-  longitude      Float
-  batteryLevel   Int?     // Nível de bateria no momento do pânico
-  resolved       Boolean  @default(false)
-  createdAt      DateTime @default(now())
+  latitude        Float
+  longitude       Float
+  batteryLevel    Int?     // Nível de bateria no momento do pânico
+  resolved        Boolean  @default(false)
+  createdAt       DateTime @default(now())
 }
 
 // ==========================================================
@@ -276,4 +278,27 @@ model CarePlan {
   professional   Professional? @relation(fields: [professionalId], references: [id])
   
   active         Boolean  @default(true)
+}
+
+// ==========================================================
+// 6. GOVERNANÇA & COMPLIANCE (LGPD)
+// ==========================================================
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  actorId       String?  // ID de quem acessou
+  action        String   // Ex: "OPENCLAW_PAYLOAD_EXTRACTION"
+  targetId      String?  // ID do paciente acessado
+  entity        String   // Ex: "User", "PatientProfile"
+  details       String?  // Detalhes extras
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  // Relacionamento com o User que executou a ação
+  actor         User?    @relation("UserActions", fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([targetId])
+  @@index([action])
 }

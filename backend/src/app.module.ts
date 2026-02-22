@@ -2,6 +2,7 @@
 // ARQUIVO: backend/src/app.module.ts
 // OBJETIVO: Módulo Raiz (Orquestrador Global)
 // STATUS: INFRAESTRUTURA HÍBRIDA (Prisma + TypeORM SQLite + Socket.IO)
+// VERSÃO: FUSÃO CONTROLADA v2.6 - INJEÇÃO DE MÓDULO DE AUTOMAÇÃO
 // -------------------------------------------------------------------------
 
 import { Module } from '@nestjs/common';
@@ -19,6 +20,7 @@ import { AuthModule } from './auth/auth.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { LocationModule } from './location/location.module'; // Módulo 6 (GPS)
 import { ChatModule } from './chat/chat.module';             // Módulo 2 (Chat SOS)
+import { AutomationModule } from './automation/automation.module'; // <--- INJEÇÃO: Módulo de Automação
 
 // --- CONTROLLERS ---
 import { EmergencyController } from './emergency.controller';
@@ -45,6 +47,7 @@ import * as nodemailer from 'nodemailer';
     AlertsModule,
     LocationModule, // Rastreamento
     ChatModule,     // WebSockets (Salas e Mensagens)
+    AutomationModule, // <--- ATIVAÇÃO: Openclaw Bridge
 
     // 3. Configuração do Carteiro (E-mail Service)
     MailerModule.forRootAsync({

@@ -1,0 +1,104 @@
+### 1. SOLICITAR TOKEN DE ACESSO (LOGIN)
+# @name login
+POST http://localhost:4000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@saudeciclodavida.com.br",
+  "password": "@@748596Jmsc##"
+}
+
+###
+
+# AJUSTE TÉCNICO: Captura do token conforme o JSON retornado pelo backend
+@token = {{login.response.body.access_token}}
+
+### 2. EXECUTAR EXTRAÇÃO PROTEGIDA (DINÂMICO)
+# Este comando utiliza a variável capturada automaticamente do Passo 1
+GET http://localhost:4000/api/v1/automation/payload/edbc9865-8923-4ff4-be91-b7d1ff4c481a
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+###
+
+### 3. EXECUTAR EXTRAÇÃO PROTEGIDA (FORÇANDO TOKEN MANUAL)
+# Objetivo: Validar se o Backend aceita o token gerado em caso de falha na variável
+GET http://localhost:4000/api/v1/automation/payload/edbc9865-8923-4ff4-be91-b7d1ff4c481a
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQHNhdWRlY2ljbG9kYXZpZGEuY29tLmJyIiwic3ViIjoiNjI3MDdhZGUtYzU1MS00OGQzLWE2MTAtYmVjMTczNzU5Y2E4IiwibmFtZSI6IkFkbWluaXN0cmFkb3IgU2lzdGVtYSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc3MTcyNDI0NiwiZXhwIjoxNzcxODEwNjQ2fQ.gOKFhc73-bt4x58SKcgH216k_iakRItJUmwytGBMgxA
+Content-Type: application/json
+
+###
+### ETAPA 1: ADMISSÃO - REGISTRAR IDENTIDADE DO PACIENTE
+# @name registro_joao
+POST http://localhost:4000/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "name": "João Camargo",
+  "email": "joao.camargo@provedor.com.br",
+  "password": "@joao748596",
+  "role": "PACIENTE"
+}
+
+###
+### ETAPA 2: INVENTÁRIO - PREENCHER DADOS CLÍNICOS DO JOÃO
+# Esta rota cria o Profile médico vinculado ao ID do João
+POST http://localhost:4000/api/v1/automation/setup-test/a8910980-f632-46b2-9b5f-06e4e0520434
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### ETAPA 3: EXTRAÇÃO - VALIDAR PAYLOAD PARA O APLICATIVO
+# Este comando simula o App buscando os dados atualizados do João
+GET http://localhost:4000/api/v1/automation/payload/a8910980-f632-46b2-9b5f-06e4e0520434
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### ETAPA 4: GPS - SIMULAR ENVIO DE COORDENADAS (Sessão Atual)
+# O ID será extraído automaticamente do Token enviado
+PATCH http://localhost:4000/api/v1/users/location
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "lat": -23.56168,
+  "lng": -46.66003
+}
+### LOGIN DO JOÃO PARA SIMULAR O CELULAR DELE
+# @name login_joao
+POST http://localhost:4000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "joao.camargo@provedor.com.br",
+  "password": "@joao748596"
+}
+@token_joao = {{login_joao.response.body.access_token}}
+
+### ETAPA 4.1: GPS - ENVIAR COORDENADAS DO JOÃO
+PATCH http://localhost:4000/api/v1/users/location
+Authorization: Bearer {{token_joao}}
+Content-Type: application/json
+
+{
+  "lat": -23.56168,
+  "lng": -46.66003
+}
+
+### ETAPA 5: SOS - ACIONAR ALERTA DE PÂNICO (JOÃO)
+# @name alerta_panico
+POST http://localhost:4000/api/v1/automation/panic/a8910980-f632-46b2-9b5f-06e4e0520434
+Authorization: Bearer {{token_joao}}
+Content-Type: application/json
+
+{
+  "reason": "Queda detectada / Acionamento Manual"
+}
+
+### ETAPA FINAL: VALIDAR PAYLOAD PÓS-PÂNICO
+GET http://localhost:4000/api/v1/automation/payload/a8910980-f632-46b2-9b5f-06e4e0520434
+Authorization: Bearer {{token}}
+Content-Type: application/json
+### 
+POST http://localhost:4000/api/v1/automation/panic/a8910980-f632-46b2-9b5f-06e4e0520434
+Authorization: Bearer {{token}}
+Content-Type: application/json
